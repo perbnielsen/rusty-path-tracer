@@ -1,4 +1,7 @@
+use assert_approx_eq::assert_approx_eq;
 use cgmath::{vec3, Point3, Vector3};
+#[macro_use]
+extern crate matches;
 
 pub fn main() {
     println!("The rusty path tracer!");
@@ -16,6 +19,12 @@ struct Ray {
     direction: Vector3<f32>,
 }
 
+impl Ray {
+    fn new(origin: Point3<f32>, direction: Vector3<f32>) -> Self {
+        Self { origin, direction }
+    }
+}
+
 #[derive(Debug)]
 struct Sphere {
     centre: Point3<f32>,
@@ -23,12 +32,36 @@ struct Sphere {
     // material: Box<dyn Material>,
 }
 
+impl Sphere {
+    fn new(centre: Point3<f32>, radius: f32) -> Self {
+        Self { centre, radius }
+    }
+}
+
 fn vector_from_to(p1: Point3<f32>, p2: Point3<f32>) -> Vector3<f32> {
     Vector3::new(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
 }
 
+#[test]
+fn test_sphere_intersection() {
+    let sphere = Sphere {
+        centre: Point3::new(0.0, 0.0, 0.0),
+        radius: 5.0,
+    };
+    let ray = Ray {
+        origin: Point3::new(0.0, 0.0, -6.0),
+        direction: Vector3::new(0.0, 0.0, 1.0),
+    };
+
+    let hit = sphere.intersect(&ray);
+    assert_matches!(hit, Some(_));
+
+    let hit = hit.unwrap();
+    assert_approx_eq!(hit.distance, 1.0);
+}
+
 impl Intersectable for Sphere {
-    fn intersect(&self, ray: Ray) -> Option<Hit> {
+    fn intersect(&self, ray: &Ray) -> Option<Hit> {
         let m = vector_from_to(self.centre, ray.origin);
         let b = cgmath::dot(m, ray.direction);
         let c = cgmath::dot(m, m) - self.radius * self.radius;
@@ -61,7 +94,7 @@ impl Intersectable for Sphere {
 }
 
 trait Intersectable {
-    fn intersect(&self, ray: Ray) -> Option<Hit>;
+    fn intersect(&self, ray: &Ray) -> Option<Hit>;
 }
 
 #[derive(Debug)]
@@ -106,5 +139,5 @@ impl Material for SimpleMaterial {
 }
 
 trait Material {
-    fn get_colour(&self, viewDirection: Vector3<f32>, normal: Vector3<f32>) -> Colour;
+    fn get_colour(&self, view_direction: Vector3<f32>, normal: Vector3<f32>) -> Colour;
 }
