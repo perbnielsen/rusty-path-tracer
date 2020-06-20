@@ -1,0 +1,10 @@
+[package]
+name = "rusty-path-tracer"
+version = "0.1.0"
+authors = ["Per Bleshøy Nielsen <per.nielsen@productmadness.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cgmath = "0.17.0"
