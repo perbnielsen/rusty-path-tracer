@@ -1,16 +1,49 @@
+mod camera;
+mod colour;
 mod hit;
 mod intersectable;
+mod ppm_image;
 mod ray;
 mod sphere;
+mod viewport;
 
-use cgmath::{vec3, Point3};
-use ray::Ray;
+use camera::Camera;
+use cgmath::{Basis3, Point3, Rotation, Vector3};
 
 pub fn main() {
     println!("The rusty path tracer!");
 
-    let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), vec3(1.0, 2.0, 3.0));
-    println!("{:?}", ray);
+    render();
+}
+
+fn render() {
+    let width = 640;
+    let height = 480;
+
+    let origin = Point3 {
+        x: 0.0,
+        y: 0.0,
+        z: 5.0,
+    };
+    let forward = Vector3 {
+        x: 0.0,
+        y: 0.0,
+        z: -1.0,
+    };
+    let up = Vector3 {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+    };
+    let fov = core::f32::consts::PI * 0.5;
+    let basis = Basis3::look_at(forward, up);
+    let camera = Camera { basis, origin, fov };
+
+    // let scene = ReadSceneFile("/Users/pernielsen/Personal/path-tracer/PathTracer/test_scene.yaml");
+    let viewport = camera.get_viewport(width, height);
+    let intersectResults = viewport.iter(); //.map().Select(scene.Intersect);
+                                            // let imageColours = intersectResults.Select(GetColour);
+                                            // let imageString = PpmImage.RenderImage(Width, Height, imageColours, maxColourValue: 255);
 }
 
 // trait Shader {}

@@ -5,6 +5,7 @@
         "Simdi",
         "Simdu",
         "cgmath",
+        "consts",
         "repr",
         "ulps"
     ]

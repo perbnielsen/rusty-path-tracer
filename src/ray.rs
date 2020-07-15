@@ -1,4 +1,4 @@
-use cgmath::{Point3, Vector3};
+use cgmath::{InnerSpace, Point3, Vector3};
 
 #[derive(Debug)]
 pub struct Ray {
@@ -8,6 +8,7 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Point3<f32>, direction: Vector3<f32>) -> Self {
+        let direction = direction.normalize();
         Self { origin, direction }
     }
 }

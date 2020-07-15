@@ -1,5 +1,5 @@
 use crate::{hit::Hit, intersectable::Intersectable, ray::Ray};
-use cgmath::{Point3, Vector3};
+use cgmath::{InnerSpace, Point3};
 
 #[derive(Debug)]
 pub struct Sphere {
@@ -16,7 +16,7 @@ impl Sphere {
 
 impl Intersectable for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<Hit> {
-        let m = vector_from_to(self.centre, ray.origin);
+        let m = ray.origin - self.centre;
         let b = cgmath::dot(m, ray.direction);
         let c = cgmath::dot(m, m) - self.radius * self.radius;
 
@@ -35,24 +35,22 @@ impl Intersectable for Sphere {
         }
 
         let intersection_point = ray.origin + (t * ray.direction);
+        let normal = (intersection_point - self.centre).normalize();
 
         Some(Hit::new(
             t,
             intersection_point,
-            vector_from_to(self.centre, intersection_point),
+            normal,
             // self.material.clone(),
         ))
     }
-}
-
-fn vector_from_to(p1: Point3<f32>, p2: Point3<f32>) -> Vector3<f32> {
-    Vector3::new(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
 }
 
 #[cfg(test)]
 pub mod tests {
     use super::*;
     use assert_approx_eq::assert_approx_eq;
+    use cgmath::Vector3;
     use matches::assert_matches;
 
     #[test]
