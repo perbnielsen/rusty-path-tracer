@@ -13,7 +13,7 @@ where
         let r = pixel.r * max_colour_value as f32;
         let g = pixel.g * max_colour_value as f32;
         let b = pixel.b * max_colour_value as f32;
-        let pixel_as_string = format!("{} {} {}\n", r as i8, g as i8, b as i8);
+        let pixel_as_string = format!("{} {} {}\n", r as u8, g as u8, b as u8);
         ppm_image.push_str(&pixel_as_string);
     }
 
@@ -48,8 +48,8 @@ pub mod tests {
             },
             Colour {
                 r: 0.1,
-                g: 0.2,
-                b: 0.3,
+                g: 0.5,
+                b: 1.0,
                 a: 0.5,
             },
         ];

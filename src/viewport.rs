@@ -72,8 +72,8 @@ impl Iterator for ViewportIter {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    // use assert_approx_eq::assert_approx_eq;
-    use cgmath::{Basis3, Rotation, Vector3};
+    use assert_approx_eq::assert_approx_eq;
+    use cgmath::{Basis3, InnerSpace, Rotation, Vector3};
 
     #[test]
     pub fn viewport_iterator_test() {
@@ -100,8 +100,8 @@ pub mod tests {
             fov: 90.0,
         };
 
-        // for i in viewport {
-        //     assert_approx_eq!(i.direction.magnitude(), 1.0);
-        // }
+        for i in viewport {
+            assert_approx_eq!(i.direction.magnitude(), 1.0);
+        }
     }
 }
