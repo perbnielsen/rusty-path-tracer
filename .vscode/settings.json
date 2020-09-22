@@ -6,6 +6,7 @@
         "Simdu",
         "cgmath",
         "consts",
+        "intersector",
         "repr",
         "ulps"
     ]

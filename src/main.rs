@@ -2,17 +2,20 @@ mod camera;
 mod colour;
 mod hit;
 mod intersectable;
+mod material;
 mod ppm_image;
 mod ray;
+mod scene;
 mod sphere;
 mod viewport;
 
 use camera::Camera;
-use cgmath::{Basis3, InnerSpace, Point3, Rotation, Vector3};
-use colour::Colour;
-use hit::Hit;
-use intersectable::Intersectable;
+use cgmath::{Basis3, Point3, Rotation, Vector3};
+use colour::BLUE;
+use material::{Material, SimpleMaterial};
+use scene::Scene;
 use sphere::Sphere;
+
 use std::fs::File;
 use std::{io::prelude::*, rc::Rc};
 
@@ -20,22 +23,21 @@ use std::{io::prelude::*, rc::Rc};
 // =========
 // [X] Fix aspect ratio
 // [X] Support "HDR"
+// [X] Sky box
 // [ ] Add light sources
 // [ ] Load scene from file
 // [ ] Add indirect light
+// [ ] Add plane primitive
 // [ ] Add mesh primitive
 //     [ ] Add triangle primitive
 // [ ] Implement reflection
 // [ ] Implement refraction
 // [ ] Add sub-pixel rays
+// [ ] Support linear -> sRGB colour space (http://chilliant.blogspot.com.au/2012/08/srgb-approximations-for-hlsl.html)
 
 pub fn main() {
     println!("The rusty path tracer!");
 
-    render();
-}
-
-fn render() {
     let width = 1024; //640;
     let height = 1024; //480;
 
@@ -46,53 +48,23 @@ fn render() {
     let basis = Basis3::look_at(forward, up);
     let camera = Camera { basis, origin, fov };
     let material = Rc::new(SimpleMaterial { colour: BLUE });
-    let scene = Sphere::new(Point3::new(0.0, 0.0, 0.0), 3.0, material.clone());
+    let scene = Scene {
+        root_intersectable: Rc::new(Sphere::new(Point3::new(0.0, 0.0, 0.0), 3.0, material)),
+    };
+
+    render(&camera, &scene, width, height);
+}
+
+fn render(camera: &Camera, scene: &Scene, width: usize, height: usize) {
     let image = camera
         .get_viewport(width, height)
         .into_iter()
-        // .map(|ray| get_colour(scene.intersect(&ray)));
-        .map(|ray| get_colour(scene.intersect(&ray), &ray.direction));
+        .map(|ray| scene.get_colour(&ray));
     let ppm_image = ppm_image::write_ppm_image(width, height, 255, image);
 
-    let file = File::create("image.ppm");
+    let file_create_handle = File::create("image.ppm");
 
-    if let Ok(mut file) = file {
-        file.write_all(ppm_image.as_ref());
+    if let Ok(mut file) = file_create_handle {
+        file.write_all(ppm_image.as_ref()).unwrap();
     }
-}
-
-const GREY: Colour = Colour {
-    r: 0.5,
-    g: 0.5,
-    b: 0.5,
-    a: 1.0,
-};
-
-const BLUE: Colour = Colour {
-    r: 0.2,
-    g: 0.2,
-    b: 1.0,
-    a: 1.0,
-};
-
-fn get_colour(hit: Option<Hit>, view_direction: &Vector3<f32>) -> Colour {
-    match hit {
-        Some(hit) => hit.material.get_colour(view_direction, &hit.normal),
-        None => GREY,
-    }
-}
-
-struct SimpleMaterial {
-    pub colour: Colour,
-}
-
-impl Material for SimpleMaterial {
-    fn get_colour(&self, view_direction: &Vector3<f32>, normal: &Vector3<f32>) -> Colour {
-        let normal_to_view = cgmath::dot(view_direction.normalize(), *normal).abs();
-        &self.colour * normal_to_view
-    }
-}
-
-pub trait Material {
-    fn get_colour(&self, view_direction: &Vector3<f32>, normal: &Vector3<f32>) -> Colour;
 }

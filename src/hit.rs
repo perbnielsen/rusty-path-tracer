@@ -1,4 +1,4 @@
-use crate::Material;
+use crate::material::Material;
 use cgmath::{Point3, Vector3};
 use std::rc::Rc;
 
