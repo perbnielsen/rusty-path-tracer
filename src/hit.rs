@@ -2,7 +2,7 @@ use crate::material::Material;
 use cgmath::{Point3, Vector3};
 use std::rc::Rc;
 
-// #[derive(Debug)]
+#[derive(Clone)]
 pub struct Hit {
     pub distance: f32,
     pub position: Point3<f32>,

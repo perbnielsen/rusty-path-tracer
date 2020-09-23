@@ -10,8 +10,8 @@ mod sphere;
 mod viewport;
 
 use camera::Camera;
-use cgmath::{Basis3, Point3, Rotation, Vector3};
-use colour::BLUE;
+use cgmath::{Point3, Vector3};
+use colour::WHITE;
 use material::{Material, SimpleMaterial};
 use scene::Scene;
 use sphere::Sphere;
@@ -38,33 +38,40 @@ use std::{io::prelude::*, rc::Rc};
 pub fn main() {
     println!("The rusty path tracer!");
 
-    let width = 1024; //640;
-    let height = 1024; //480;
+    let camera = make_camera();
+    let material = Rc::new(SimpleMaterial {
+        colour: WHITE,
+        secondary_rays: 6,
+    });
 
-    let origin = Point3::new(0.0, 0.0, 5.0);
-    let forward: Vector3<f32> = Vector3::new(0.0, 0.0, -1.0);
-    let up: Vector3<f32> = Vector3::new(0.0, 1.0, 0.0);
-    let fov = core::f32::consts::PI * 0.5;
-    let basis = Basis3::look_at(forward, up);
-    let camera = Camera { basis, origin, fov };
-    let material = Rc::new(SimpleMaterial { colour: BLUE });
     let scene = Scene {
         root_intersectable: Rc::new(Sphere::new(Point3::new(0.0, 0.0, 0.0), 3.0, material)),
     };
 
-    render(&camera, &scene, width, height);
+    let width = 1024;
+    let height = 1024;
+    let image = render(&camera, &scene, width, height);
+
+    let file_create_handle = File::create("image.ppm");
+    if let Ok(mut file) = file_create_handle {
+        file.write_all(image.as_ref()).unwrap();
+    }
 }
 
-fn render(camera: &Camera, scene: &Scene, width: usize, height: usize) {
+fn make_camera() -> Camera {
+    let origin = Point3::new(0.0, 0.0, 5.0);
+    let forward: Vector3<f32> = Vector3::new(0.0, 0.0, -1.0);
+    let up: Vector3<f32> = Vector3::new(0.0, 1.0, 0.0);
+    let fov = core::f32::consts::PI * 0.5;
+
+    Camera::new(origin, forward, up, fov)
+}
+
+fn render(camera: &Camera, scene: &Scene, width: usize, height: usize) -> String {
     let image = camera
         .get_viewport(width, height)
         .into_iter()
         .map(|ray| scene.get_colour(&ray));
-    let ppm_image = ppm_image::write_ppm_image(width, height, 255, image);
 
-    let file_create_handle = File::create("image.ppm");
-
-    if let Ok(mut file) = file_create_handle {
-        file.write_all(ppm_image.as_ref()).unwrap();
-    }
+    ppm_image::write_ppm_image(width, height, 255, image)
 }
