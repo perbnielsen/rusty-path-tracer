@@ -1,4 +1,9 @@
-use std::ops::Mul;
+use std::{
+    iter::Sum,
+    ops::{Add, Div, Mul, Rem, Sub},
+};
+
+use cgmath::{VectorSpace, Zero};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Colour {
@@ -64,19 +69,8 @@ pub const BLACK: Colour = Colour {
     a: 1.0,
 };
 
-// impl Mul<f32> for &Colour {
-//     type Output = Colour;
-//     fn mul(self, scalar: f32) -> Self::Output {
-//         Colour {
-//             r: self.r * scalar,
-//             g: self.g * scalar,
-//             b: self.b * scalar,
-//             a: self.a,
-//         }
-//     }
-// }
-
-impl Mul<Colour> for Colour {
+#[allow(dead_code)]
+impl Mul<Self> for Colour {
     type Output = Self;
     fn mul(self, other: Self) -> Self::Output {
         Colour {
@@ -88,20 +82,36 @@ impl Mul<Colour> for Colour {
     }
 }
 
-// impl Add<Colour> for &Colour {
-//     type Output = Colour;
-//     fn add(self, other: Colour) -> Self::Output {
-//         Colour {
-//             r: self.r + other.r,
-//             g: self.g + other.g,
-//             b: self.b + other.b,
-//             a: self.a + other.a,
-//         }
-//     }
-// }
+#[allow(dead_code)]
+impl Mul<f32> for Colour {
+    type Output = Self;
+    fn mul(self, other: f32) -> Self::Output {
+        Colour {
+            r: self.r * other,
+            g: self.g * other,
+            b: self.b * other,
+            a: self.a * other,
+        }
+    }
+}
 
-impl Colour {
-    pub fn add(self, other: &Colour) -> Colour {
+#[allow(dead_code)]
+impl Div<f32> for Colour {
+    type Output = Self;
+    fn div(self, other: f32) -> Self::Output {
+        Colour {
+            r: self.r / other,
+            g: self.g / other,
+            b: self.b / other,
+            a: self.a / other,
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl Add<Self> for Colour {
+    type Output = Colour;
+    fn add(self, other: Colour) -> Self::Output {
         Colour {
             r: self.r + other.r,
             g: self.g + other.g,
@@ -109,33 +119,61 @@ impl Colour {
             a: self.a + other.a,
         }
     }
+}
 
-    pub fn mul(self, scalar: f32) -> Colour {
+#[allow(dead_code)]
+impl Sub<Self> for Colour {
+    type Output = Colour;
+    fn sub(self, other: Colour) -> Self::Output {
         Colour {
-            r: self.r * scalar,
-            g: self.g * scalar,
-            b: self.b * scalar,
-            a: self.a,
+            r: self.r - other.r,
+            g: self.g - other.g,
+            b: self.b - other.b,
+            a: self.a - other.a,
         }
     }
 }
 
-// pub fn add(this: &Colour, other: &Colour) -> Colour {
-//     Colour {
-//         r: this.r + other.r,
-//         g: this.g + other.g,
-//         b: this.b + other.b,
-//         a: this.a + other.a,
-//     }
-// }
+#[allow(dead_code)]
+impl Rem<f32> for Colour {
+    type Output = Colour;
+    fn rem(self, other: f32) -> Self::Output {
+        Colour {
+            r: self.r % other,
+            g: self.g % other,
+            b: self.b % other,
+            a: self.a % other,
+        }
+    }
+}
 
-// Implement Innerspace for Colour?
+impl Sum for Colour {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(BLACK, |sum, val| sum + val)
+    }
+}
 
-pub fn lerp(colour_a: Colour, colour_b: Colour, amount: f32) -> Colour {
-    Colour {
-        r: (1.0 - amount) * colour_a.r + amount * colour_b.r,
-        g: (1.0 - amount) * colour_a.g + amount * colour_b.g,
-        b: (1.0 - amount) * colour_a.b + amount * colour_b.b,
-        a: (1.0 - amount) * colour_a.a + amount * colour_b.a,
+impl Zero for Colour {
+    fn zero() -> Self {
+        BLACK.clone()
+    }
+
+    fn is_zero(&self) -> bool {
+        self.r == 0.0 && self.g == 0.0 && self.b == 0.0 && self.a == 0.0
+    }
+
+    fn set_zero(&mut self) {
+        self.r = BLACK.r;
+        self.g = BLACK.g;
+        self.b = BLACK.b;
+        self.a = BLACK.a;
+    }
+}
+
+impl VectorSpace for Colour {
+    type Scalar = f32;
+
+    fn lerp(self, other: Self, amount: Self::Scalar) -> Self {
+        self + ((other - self) * amount)
     }
 }

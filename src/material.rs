@@ -1,4 +1,4 @@
-use crate::colour::{Colour, BLACK};
+use crate::colour::Colour;
 use crate::ray::Ray;
 use crate::scene::Scene;
 use cgmath::InnerSpace;
@@ -14,6 +14,11 @@ pub trait Material {
         position: &Point3<f32>,
         normal: &Vector3<f32>,
     ) -> Colour;
+}
+
+pub struct SimpleMaterial {
+    pub colour: Colour,
+    pub secondary_rays: i32,
 }
 
 impl Material for SimpleMaterial {
@@ -35,39 +40,37 @@ impl Material for SimpleMaterial {
             scene.get_colour(&ray)
         });
         let _collected_colours: Vec<Colour> = colours.clone().collect();
-        let colour = colours
-            .fold(BLACK, |x, y| x.add(&y))
-            .mul(1.0 / self.secondary_rays as f32);
+        let colour = colours.sum::<Colour>() / self.secondary_rays as f32;
 
         colour * self.colour
-
-        // Colour {
-        //     r: colour.r * self.colour.r,
-        //     g: colour.g * self.colour.g,
-        //     b: colour.b * self.colour.b,
-        //     a: 1.0,
-        // }
-
-        // &self.colour * normal_to_view
     }
 }
 
 pub fn unit_vector_in_hemisphere(direction: &Vector3<f32>) -> Vector3<f32> {
-    // direction.clone()
     let mut rng = rand::thread_rng();
     loop {
         let vector = Vector3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>());
         let magnitude = vector.magnitude2();
-        if magnitude > 0.1 && magnitude < 1.0 {
-            // && cgmath::dot(*direction, vector) > 0.0 {
+        if magnitude > 0.001 && magnitude < 1.0 {
             return (vector.normalize() + direction).normalize();
         }
     }
 }
 
-pub struct SimpleMaterial {
+pub struct LightMaterial {
     pub colour: Colour,
-    pub secondary_rays: i32,
+}
+
+impl Material for LightMaterial {
+    fn get_colour(
+        &self,
+        _scene: &Scene,
+        _view_direction: &Vector3<f32>,
+        _position: &Point3<f32>,
+        _normal: &Vector3<f32>,
+    ) -> Colour {
+        self.colour
+    }
 }
 
 #[cfg(test)]

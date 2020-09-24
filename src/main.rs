@@ -11,8 +11,9 @@ mod viewport;
 
 use camera::Camera;
 use cgmath::{Point3, Vector3};
-use colour::WHITE;
-use material::{Material, SimpleMaterial};
+use colour::{GREEN, WHITE};
+use intersectable::Intersectables;
+use material::{LightMaterial, Material, SimpleMaterial};
 use scene::Scene;
 use sphere::Sphere;
 
@@ -24,9 +25,9 @@ use std::{io::prelude::*, rc::Rc};
 // [X] Fix aspect ratio
 // [X] Support "HDR"
 // [X] Sky box
-// [ ] Add light sources
+// [X] Add light sources
 // [ ] Load scene from file
-// [ ] Add indirect light
+// [X] Add indirect light
 // [ ] Add plane primitive
 // [ ] Add mesh primitive
 //     [ ] Add triangle primitive
@@ -39,13 +40,40 @@ pub fn main() {
     println!("The rusty path tracer!");
 
     let camera = make_camera();
-    let material = Rc::new(SimpleMaterial {
+    let material_white = Rc::new(SimpleMaterial {
         colour: WHITE,
-        secondary_rays: 6,
+        secondary_rays: 8,
     });
 
+    let material_light = Rc::new(LightMaterial { colour: GREEN });
+
+    let root = Intersectables {
+        intersectables: vec![
+            Box::new(Sphere::new(
+                Point3::new(0.0, 0.0, 0.0),
+                3.0,
+                material_white.clone(),
+            )),
+            Box::new(Sphere::new(
+                Point3::new(2.5, 2.5, 2.5),
+                1.0,
+                material_light.clone(),
+            )),
+            Box::new(Sphere::new(
+                Point3::new(-2.5, -2.5, 2.5),
+                1.0,
+                material_light.clone(),
+            )),
+            Box::new(Sphere::new(
+                Point3::new(0.0, 0.0, 3.2),
+                0.1,
+                material_light.clone(),
+            )),
+        ],
+    };
+
     let scene = Scene {
-        root_intersectable: Rc::new(Sphere::new(Point3::new(0.0, 0.0, 0.0), 3.0, material)),
+        root_intersectable: Box::new(root),
     };
 
     let width = 1024;

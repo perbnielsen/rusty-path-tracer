@@ -1,33 +1,25 @@
+use std::cmp::Ordering;
+
 use crate::{hit::Hit, ray::Ray};
 
 pub trait Intersectable {
     fn intersect(&self, ray: &Ray) -> Option<Hit>;
 }
 
-// #[derive()]
-// pub struct Intersectables {
-//     pub intersectables: Vec<Box<dyn Intersectable>>,
-// }
+pub struct Intersectables {
+    pub intersectables: Vec<Box<dyn Intersectable>>,
+}
 
-// impl Intersectable for Intersectables {
-//     fn intersect(&self, ray: &Ray) -> Option<Hit> {
-//         let intersections = self.intersectables.iter().map(|i| i.intersect(ray));
-//         let hit = intersections.fold(
-//             Box::new(None),
-//             |x: Box<Option<Hit>>, y: Box<Option<Hit>>| match *x {
-//                 None => x,
-//                 Some(x_hit) => match *y {
-//                     None => y,
-//                     Some(y_hit) => {
-//                         if x_hit.distance < y_hit.distance {
-//                             x
-//                         } else {
-//                             y
-//                         }
-//                     }
-//                 },
-//             },
-//         );
-//         *hit
-//     }
-// }
+impl Intersectable for Intersectables {
+    fn intersect(&self, ray: &Ray) -> Option<Hit> {
+        self.intersectables
+            .iter()
+            .filter_map(|i| i.intersect(ray))
+            .into_iter()
+            .min_by(|x, y| {
+                x.distance
+                    .partial_cmp(&y.distance)
+                    .unwrap_or(Ordering::Equal)
+            })
+    }
+}

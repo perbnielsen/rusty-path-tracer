@@ -1,14 +1,12 @@
-use std::rc::Rc;
-
-use cgmath::{InnerSpace, Vector3};
+use cgmath::{InnerSpace, Vector3, VectorSpace};
 
 use crate::{
-    colour::lerp, colour::Colour, colour::BLUE, colour::WHITE, intersectable::Intersectable,
+    colour::Colour, colour::BLACK, colour::LIGHT_BLUE, colour::WHITE, intersectable::Intersectable,
     ray::Ray,
 };
 
 pub struct Scene {
-    pub root_intersectable: Rc<dyn Intersectable>,
+    pub root_intersectable: Box<dyn Intersectable>,
 }
 
 impl Scene {
@@ -24,5 +22,6 @@ impl Scene {
 }
 
 fn get_sky_colour(direction: &Vector3<f32>) -> Colour {
-    lerp(BLUE, WHITE, 0.5 + direction.normalize().y * 0.5)
+    // Colour::lerp(LIGHT_BLUE, WHITE, 0.5 + direction.normalize().y * 0.5)
+    BLACK
 }
