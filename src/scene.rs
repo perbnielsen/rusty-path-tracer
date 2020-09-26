@@ -1,8 +1,7 @@
 use cgmath::{InnerSpace, Vector3, VectorSpace};
 
 use crate::{
-    colour::Colour, colour::BLACK, colour::LIGHT_BLUE, colour::WHITE, intersectable::Intersectable,
-    ray::Ray,
+    colour::Colour, colour::LIGHT_BLUE, colour::WHITE, intersectable::Intersectable, ray::Ray,
 };
 
 pub struct Scene {
@@ -22,6 +21,5 @@ impl Scene {
 }
 
 fn get_sky_colour(direction: &Vector3<f32>) -> Colour {
-    // Colour::lerp(LIGHT_BLUE, WHITE, 0.5 + direction.normalize().y * 0.5)
-    BLACK
+    Colour::lerp(LIGHT_BLUE, WHITE, 0.5 + direction.normalize().y * 0.5)
 }

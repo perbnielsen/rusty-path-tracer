@@ -1,4 +1,5 @@
 use crate::colour::Colour;
+use crate::colour::{BLACK, WHITE};
 use crate::ray::Ray;
 use crate::scene::Scene;
 use cgmath::InnerSpace;
@@ -16,12 +17,35 @@ pub trait Material {
     ) -> Colour;
 }
 
-pub struct SimpleMaterial {
+pub struct MirrorMaterial {
+    pub colour: Colour,
+}
+
+impl Material for MirrorMaterial {
+    fn get_colour(
+        &self,
+        scene: &Scene,
+        view_direction: &Vector3<f32>,
+        position: &Point3<f32>,
+        normal: &Vector3<f32>,
+    ) -> Colour {
+        let view_direction_projected_on_normal = cgmath::dot(*view_direction, *normal) * normal;
+        let reflection = view_direction - 2.0 * view_direction_projected_on_normal;
+        let ray = Ray {
+            origin: position.clone(),
+            direction: reflection,
+        };
+
+        scene.get_colour(&ray) * self.colour
+    }
+}
+
+pub struct DiffuseMaterial {
     pub colour: Colour,
     pub secondary_rays: i32,
 }
 
-impl Material for SimpleMaterial {
+impl Material for DiffuseMaterial {
     fn get_colour(
         &self,
         scene: &Scene,
@@ -49,10 +73,36 @@ impl Material for SimpleMaterial {
 pub fn unit_vector_in_hemisphere(direction: &Vector3<f32>) -> Vector3<f32> {
     let mut rng = rand::thread_rng();
     loop {
-        let vector = Vector3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>());
+        let vector = Vector3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
+            .map(|val| val * 2.0 - 1.0);
+
         let magnitude = vector.magnitude2();
         if magnitude > 0.001 && magnitude < 1.0 {
             return (vector.normalize() + direction).normalize();
+        }
+    }
+}
+
+pub struct CheckerMaterial {
+    pub grid_size: f32,
+}
+
+impl Material for CheckerMaterial {
+    fn get_colour(
+        &self,
+        _scene: &Scene,
+        _view_direction: &Vector3<f32>,
+        position: &Point3<f32>,
+        _normal: &Vector3<f32>,
+    ) -> Colour {
+        let value_x = position.x.abs() % (2.0 * self.grid_size) < self.grid_size;
+        let value_y = position.y.abs() % (2.0 * self.grid_size) < self.grid_size;
+        let value_z = position.z.abs() % (2.0 * self.grid_size) < self.grid_size;
+
+        if value_x ^ value_y ^ value_z {
+            WHITE
+        } else {
+            BLACK
         }
     }
 }
@@ -70,18 +120,5 @@ impl Material for LightMaterial {
         _normal: &Vector3<f32>,
     ) -> Colour {
         self.colour
-    }
-}
-
-#[cfg(test)]
-pub mod tests {
-    use super::*;
-
-    #[test]
-    pub fn unit_vector_in_hemisphere_test() {
-        let vector = Vector3::new(1.0, 0.0, 0.0);
-        let random_direction = unit_vector_in_hemisphere(&vector);
-
-        assert_eq()
     }
 }

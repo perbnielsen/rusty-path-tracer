@@ -9,16 +9,6 @@ pub struct Sphere {
     pub material: Rc<dyn Material>,
 }
 
-impl Sphere {
-    pub fn new(centre: Point3<f32>, radius: f32, material: Rc<dyn Material>) -> Self {
-        Self {
-            centre,
-            radius,
-            material,
-        }
-    }
-}
-
 impl Intersectable for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<Hit> {
         let m = ray.origin - self.centre;

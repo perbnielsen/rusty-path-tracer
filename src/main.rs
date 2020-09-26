@@ -13,7 +13,7 @@ use camera::Camera;
 use cgmath::{Point3, Vector3};
 use colour::{GREEN, WHITE};
 use intersectable::Intersectables;
-use material::{LightMaterial, Material, SimpleMaterial};
+use material::{CheckerMaterial, DiffuseMaterial, LightMaterial, Material, MirrorMaterial};
 use scene::Scene;
 use sphere::Sphere;
 
@@ -40,35 +40,36 @@ pub fn main() {
     println!("The rusty path tracer!");
 
     let camera = make_camera();
-    let material_white = Rc::new(SimpleMaterial {
-        colour: WHITE,
-        secondary_rays: 8,
-    });
-
+    let material_mirror = Rc::new(MirrorMaterial { colour: WHITE });
     let material_light = Rc::new(LightMaterial { colour: GREEN });
+    let material_checker = Rc::new(CheckerMaterial { grid_size: 0.5 });
+    let material_diffuse = Rc::new(DiffuseMaterial {
+        colour: WHITE,
+        secondary_rays: 16,
+    });
 
     let root = Intersectables {
         intersectables: vec![
-            Box::new(Sphere::new(
-                Point3::new(0.0, 0.0, 0.0),
-                3.0,
-                material_white.clone(),
-            )),
-            Box::new(Sphere::new(
-                Point3::new(2.5, 2.5, 2.5),
-                1.0,
-                material_light.clone(),
-            )),
-            Box::new(Sphere::new(
-                Point3::new(-2.5, -2.5, 2.5),
-                1.0,
-                material_light.clone(),
-            )),
-            Box::new(Sphere::new(
-                Point3::new(0.0, 0.0, 3.2),
-                0.1,
-                material_light.clone(),
-            )),
+            Box::new(Sphere {
+                centre: Point3::new(0.0, 0.0, 0.0),
+                radius: 2.0,
+                material: material_diffuse.clone(),
+            }),
+            Box::new(Sphere {
+                centre: Point3::new(2.5, 2.5, 2.5),
+                radius: 1.0,
+                material: material_light.clone(),
+            }),
+            Box::new(Sphere {
+                centre: Point3::new(2.5, 0.0, 2.0),
+                radius: 1.0,
+                material: material_checker.clone(),
+            }),
+            // Box::new(Sphere{
+            //     centre: Point3::new(0.0, -3.0, -1.0),
+            //     radius: 2.0,
+            //     material: material_diffuse.clone(),
+            // }),
         ],
     };
 
