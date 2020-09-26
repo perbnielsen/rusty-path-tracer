@@ -17,8 +17,7 @@ use material::{CheckerMaterial, DiffuseMaterial, LightMaterial, Material, Mirror
 use scene::Scene;
 use sphere::Sphere;
 
-use std::fs::File;
-use std::{io::prelude::*, rc::Rc};
+use std::{fs::File, io::Write, rc::Rc};
 
 // Features:
 // =========
@@ -45,7 +44,7 @@ pub fn main() {
     let material_checker = Rc::new(CheckerMaterial { grid_size: 0.5 });
     let material_diffuse = Rc::new(DiffuseMaterial {
         colour: WHITE,
-        secondary_rays: 16,
+        secondary_rays: 32,
     });
 
     let root = Intersectables {
@@ -65,26 +64,38 @@ pub fn main() {
                 radius: 1.0,
                 material: material_checker.clone(),
             }),
-            // Box::new(Sphere{
-            //     centre: Point3::new(0.0, -3.0, -1.0),
-            //     radius: 2.0,
-            //     material: material_diffuse.clone(),
-            // }),
+            Box::new(Sphere {
+                centre: Point3::new(0.0, -3.0, -1.0),
+                radius: 2.0,
+                material: material_mirror.clone(),
+            }),
         ],
     };
 
-    let scene = Scene {
+    let mut scene = Scene {
         root_intersectable: Box::new(root),
+        max_ray_depth: 4,
+        total_number_of_rays_checked: 0,
+        total_number_of_rays_killed: 0,
     };
 
     let width = 1024;
     let height = 1024;
-    let image = render(&camera, &scene, width, height);
+    let image = render(&camera, &mut scene, width, height);
 
     let file_create_handle = File::create("image.ppm");
     if let Ok(mut file) = file_create_handle {
         file.write_all(image.as_ref()).unwrap();
     }
+
+    println!(
+        "Number of rays traced: {0}",
+        scene.total_number_of_rays_checked
+    );
+    println!(
+        "Number of rays killed: {0}",
+        scene.total_number_of_rays_killed
+    );
 }
 
 fn make_camera() -> Camera {
@@ -96,11 +107,11 @@ fn make_camera() -> Camera {
     Camera::new(origin, forward, up, fov)
 }
 
-fn render(camera: &Camera, scene: &Scene, width: usize, height: usize) -> String {
+fn render(camera: &Camera, scene: &mut Scene, width: usize, height: usize) -> String {
     let image = camera
         .get_viewport(width, height)
         .into_iter()
-        .map(|ray| scene.get_colour(&ray));
+        .map(|ray| scene.get_colour(&ray, scene.max_ray_depth));
 
     ppm_image::write_ppm_image(width, height, 255, image)
 }

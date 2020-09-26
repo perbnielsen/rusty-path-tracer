@@ -10,10 +10,11 @@ use rand::Rng;
 pub trait Material {
     fn get_colour(
         &self,
-        scene: &Scene,
+        scene: &mut Scene,
         view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         normal: &Vector3<f32>,
+        ray_depth: u8,
     ) -> Colour;
 }
 
@@ -24,10 +25,11 @@ pub struct MirrorMaterial {
 impl Material for MirrorMaterial {
     fn get_colour(
         &self,
-        scene: &Scene,
+        scene: &mut Scene,
         view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         normal: &Vector3<f32>,
+        ray_depth: u8,
     ) -> Colour {
         let view_direction_projected_on_normal = cgmath::dot(*view_direction, *normal) * normal;
         let reflection = view_direction - 2.0 * view_direction_projected_on_normal;
@@ -36,7 +38,7 @@ impl Material for MirrorMaterial {
             direction: reflection,
         };
 
-        scene.get_colour(&ray) * self.colour
+        scene.get_colour(&ray, ray_depth) * self.colour
     }
 }
 
@@ -48,22 +50,20 @@ pub struct DiffuseMaterial {
 impl Material for DiffuseMaterial {
     fn get_colour(
         &self,
-        scene: &Scene,
+        scene: &mut Scene,
         _view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         normal: &Vector3<f32>,
+        ray_depth: u8,
     ) -> Colour {
-        // let normal_to_view = cgmath::dot(view_direction.normalize(), *normal).abs();
-
         let colours = (0..self.secondary_rays).map(|_| {
-            let random_direction = unit_vector_in_hemisphere(&normal.normalize());
+            let random_direction = unit_vector_in_hemisphere(&normal);
             let ray = Ray {
                 origin: position.clone(),
                 direction: random_direction,
             };
-            scene.get_colour(&ray)
+            scene.get_colour(&ray, ray_depth)
         });
-        let _collected_colours: Vec<Colour> = colours.clone().collect();
         let colour = colours.sum::<Colour>() / self.secondary_rays as f32;
 
         colour * self.colour
@@ -76,8 +76,8 @@ pub fn unit_vector_in_hemisphere(direction: &Vector3<f32>) -> Vector3<f32> {
         let vector = Vector3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
             .map(|val| val * 2.0 - 1.0);
 
-        let magnitude = vector.magnitude2();
-        if magnitude > 0.001 && magnitude < 1.0 {
+        let magnitude_sqr = vector.magnitude2();
+        if magnitude_sqr > 0.001 && magnitude_sqr < 1.0 {
             return (vector.normalize() + direction).normalize();
         }
     }
@@ -90,10 +90,11 @@ pub struct CheckerMaterial {
 impl Material for CheckerMaterial {
     fn get_colour(
         &self,
-        _scene: &Scene,
+        _scene: &mut Scene,
         _view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         _normal: &Vector3<f32>,
+        _ray_depth: u8,
     ) -> Colour {
         let value_x = position.x.abs() % (2.0 * self.grid_size) < self.grid_size;
         let value_y = position.y.abs() % (2.0 * self.grid_size) < self.grid_size;
@@ -114,10 +115,11 @@ pub struct LightMaterial {
 impl Material for LightMaterial {
     fn get_colour(
         &self,
-        _scene: &Scene,
+        _scene: &mut Scene,
         _view_direction: &Vector3<f32>,
         _position: &Point3<f32>,
         _normal: &Vector3<f32>,
+        _ray_depth: u8,
     ) -> Colour {
         self.colour
     }

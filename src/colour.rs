@@ -111,7 +111,7 @@ impl Div<f32> for Colour {
 #[allow(dead_code)]
 impl Add<Self> for Colour {
     type Output = Colour;
-    fn add(self, other: Colour) -> Self::Output {
+    fn add(self, other: Self) -> Self::Output {
         Colour {
             r: self.r + other.r,
             g: self.g + other.g,
@@ -124,7 +124,7 @@ impl Add<Self> for Colour {
 #[allow(dead_code)]
 impl Sub<Self> for Colour {
     type Output = Colour;
-    fn sub(self, other: Colour) -> Self::Output {
+    fn sub(self, other: Self) -> Self::Output {
         Colour {
             r: self.r - other.r,
             g: self.g - other.g,
