@@ -12,7 +12,7 @@ mod viewport;
 use camera::Camera;
 use cgmath::{Point3, Vector3};
 use colour::{GREEN, WHITE};
-use intersectable::Intersectables;
+use intersectable::{Intersectables, Triangle};
 use material::{CheckerMaterial, DiffuseMaterial, LightMaterial, Material, MirrorMaterial};
 use scene::Scene;
 use sphere::Sphere;
@@ -25,12 +25,12 @@ use std::{fs::File, io::Write, rc::Rc};
 // [X] Support "HDR"
 // [X] Sky box
 // [X] Add light sources
-// [ ] Load scene from file
 // [X] Add indirect light
+// [X] Add triangle primitive
+// [X] Implement reflection
 // [ ] Add plane primitive
 // [ ] Add mesh primitive
-//     [ ] Add triangle primitive
-// [ ] Implement reflection
+// [ ] Load scene from file
 // [ ] Implement refraction
 // [ ] Add sub-pixel rays
 // [ ] Support linear -> sRGB colour space (http://chilliant.blogspot.com.au/2012/08/srgb-approximations-for-hlsl.html)
@@ -69,13 +69,19 @@ pub fn main() {
                 radius: 2.0,
                 material: material_mirror.clone(),
             }),
+            Box::new(Triangle::new(
+                Point3::new(0.0, -4.0, 0.0),
+                Point3::new(-4.0, -4.0, 0.0),
+                Point3::new(-4.0, 0.0, 0.0),
+                material_checker.clone(),
+            )),
         ],
     };
 
     let mut scene = Scene {
         root_intersectable: Box::new(root),
         max_ray_depth: 4,
-        total_number_of_rays_checked: 0,
+        total_number_of_rays_cast: 0,
         total_number_of_rays_killed: 0,
     };
 
@@ -90,7 +96,7 @@ pub fn main() {
 
     println!(
         "Number of rays traced: {0}",
-        scene.total_number_of_rays_checked
+        scene.total_number_of_rays_cast
     );
     println!(
         "Number of rays killed: {0}",

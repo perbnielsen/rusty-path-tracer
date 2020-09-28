@@ -8,7 +8,7 @@ use crate::{
 pub struct Scene {
     pub max_ray_depth: u8,
     pub root_intersectable: Box<dyn Intersectable>,
-    pub total_number_of_rays_checked: u32,
+    pub total_number_of_rays_cast: u32,
     pub total_number_of_rays_killed: u32,
 }
 
@@ -19,7 +19,7 @@ impl Scene {
             return BLACK;
         }
 
-        self.total_number_of_rays_checked += 1;
+        self.total_number_of_rays_cast += 1;
 
         let hit = self.root_intersectable.intersect(ray);
         match hit {

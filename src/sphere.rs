@@ -2,7 +2,6 @@ use crate::{hit::Hit, intersectable::Intersectable, ray::Ray, Material};
 use cgmath::{InnerSpace, Point3};
 use std::rc::Rc;
 
-// #[derive(Debug)]
 pub struct Sphere {
     pub centre: Point3<f32>,
     pub radius: f32,
@@ -40,24 +39,3 @@ impl Intersectable for Sphere {
         ))
     }
 }
-
-// #[cfg(test)]
-// pub mod tests {
-//     use super::*;
-//     use assert_approx_eq::assert_approx_eq;
-//     use cgmath::Vector3;
-//     use matches::assert_matches;
-
-//     #[test]
-//     pub fn test_sphere_intersection() {
-//         let sphere = Sphere::new(Point3::new(0.0, 0.0, 0.0), 5.0);
-//         let ray = Ray::new(Point3::new(0.0, 0.0, -6.0), Vector3::new(0.0, 0.0, 1.0));
-//         let hit = sphere.intersect(&ray);
-
-//         assert_matches!(hit, Some(_));
-
-//         let hit = hit.unwrap();
-
-//         assert_approx_eq!(hit.distance, 1.0);
-//     }
-// }
