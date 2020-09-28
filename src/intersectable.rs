@@ -1,8 +1,6 @@
-use std::{cmp::Ordering, rc::Rc};
-
-use cgmath::{InnerSpace, Point3, Vector3};
-
 use crate::{hit::Hit, material::Material, ray::Ray};
+use cgmath::{InnerSpace, Point3, Vector3};
+use std::{cmp::Ordering, rc::Rc};
 
 pub trait Intersectable {
     fn intersect(&self, ray: &Ray) -> Option<Hit>;

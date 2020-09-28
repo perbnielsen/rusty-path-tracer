@@ -22,6 +22,14 @@ pub const GREY: Colour = Colour {
 };
 
 #[allow(dead_code)]
+pub const LIGHT_GREY: Colour = Colour {
+    r: 0.75,
+    g: 0.75,
+    b: 0.75,
+    a: 1.0,
+};
+
+#[allow(dead_code)]
 pub const LIGHT_BLUE: Colour = Colour {
     r: 0.5,
     g: 0.7,

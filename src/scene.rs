@@ -1,15 +1,13 @@
-use cgmath::{InnerSpace, Vector3, VectorSpace};
+use cgmath::Vector3;
 
-use crate::{
-    colour::Colour, colour::BLACK, colour::LIGHT_BLUE, colour::WHITE, intersectable::Intersectable,
-    ray::Ray,
-};
+use crate::{colour::Colour, colour::BLACK, intersectable::Intersectable, ray::Ray};
 
 pub struct Scene {
     pub max_ray_depth: u8,
     pub root_intersectable: Box<dyn Intersectable>,
     pub total_number_of_rays_cast: u32,
     pub total_number_of_rays_killed: u32,
+    pub background: fn(&Vector3<f32>) -> Colour,
 }
 
 impl Scene {
@@ -30,11 +28,7 @@ impl Scene {
                 &hit.normal,
                 ray_depth - 1,
             ),
-            None => get_sky_colour(&ray.direction),
+            None => (self.background)(&ray.direction),
         }
     }
-}
-
-fn get_sky_colour(direction: &Vector3<f32>) -> Colour {
-    Colour::lerp(LIGHT_BLUE, WHITE, 0.5 + direction.normalize().y * 0.5)
 }

@@ -10,8 +10,8 @@ mod sphere;
 mod viewport;
 
 use camera::Camera;
-use cgmath::{Point3, Vector3};
-use colour::{GREEN, WHITE};
+use cgmath::{InnerSpace, Point3, Vector3, VectorSpace};
+use colour::Colour;
 use intersectable::{Intersectables, Triangle};
 use material::{CheckerMaterial, DiffuseMaterial, LightMaterial, Material, MirrorMaterial};
 use scene::Scene;
@@ -39,12 +39,16 @@ pub fn main() {
     println!("The rusty path tracer!");
 
     let camera = make_camera();
-    let material_mirror = Rc::new(MirrorMaterial { colour: WHITE });
-    let material_light = Rc::new(LightMaterial { colour: GREEN });
+    let material_mirror = Rc::new(MirrorMaterial {
+        colour: colour::LIGHT_BLUE,
+    });
+    let material_light = Rc::new(LightMaterial {
+        colour: colour::GREEN,
+    });
     let material_checker = Rc::new(CheckerMaterial { grid_size: 0.5 });
     let material_diffuse = Rc::new(DiffuseMaterial {
-        colour: WHITE,
-        secondary_rays: 32,
+        colour: colour::LIGHT_GREY,
+        secondary_rays: 64,
     });
 
     let root = Intersectables {
@@ -83,6 +87,7 @@ pub fn main() {
         max_ray_depth: 4,
         total_number_of_rays_cast: 0,
         total_number_of_rays_killed: 0,
+        background: background_sky,
     };
 
     let width = 1024;
@@ -116,8 +121,15 @@ fn make_camera() -> Camera {
 fn render(camera: &Camera, scene: &mut Scene, width: usize, height: usize) -> String {
     let image = camera
         .get_viewport(width, height)
-        .into_iter()
         .map(|ray| scene.get_colour(&ray, scene.max_ray_depth));
 
     ppm_image::write_ppm_image(width, height, 255, image)
+}
+
+fn background_sky(direction: &Vector3<f32>) -> Colour {
+    Colour::lerp(
+        colour::LIGHT_BLUE,
+        colour::WHITE,
+        0.5 + direction.normalize().y * 0.5,
+    )
 }
