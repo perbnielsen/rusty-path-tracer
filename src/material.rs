@@ -1,16 +1,17 @@
+use crate::colour;
 use crate::colour::Colour;
-use crate::colour::{BLACK, WHITE};
 use crate::ray::Ray;
 use crate::scene::Scene;
 use cgmath::InnerSpace;
 use cgmath::Point3;
 use cgmath::Vector3;
+use cgmath::VectorSpace;
 use rand::Rng;
 
 pub trait Material {
     fn get_colour(
         &self,
-        scene: &mut Scene,
+        scene: &Scene,
         view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         normal: &Vector3<f32>,
@@ -25,7 +26,7 @@ pub struct MirrorMaterial {
 impl Material for MirrorMaterial {
     fn get_colour(
         &self,
-        scene: &mut Scene,
+        scene: &Scene,
         view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         normal: &Vector3<f32>,
@@ -38,7 +39,7 @@ impl Material for MirrorMaterial {
             direction: reflection,
         };
 
-        scene.get_colour(&ray, ray_depth) * self.colour
+        scene.cast_ray(&ray, ray_depth) * self.colour
     }
 }
 
@@ -50,7 +51,7 @@ pub struct DiffuseMaterial {
 impl Material for DiffuseMaterial {
     fn get_colour(
         &self,
-        scene: &mut Scene,
+        scene: &Scene,
         _view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         normal: &Vector3<f32>,
@@ -62,7 +63,7 @@ impl Material for DiffuseMaterial {
                 origin: position.clone(),
                 direction: random_direction,
             };
-            scene.get_colour(&ray, ray_depth)
+            scene.cast_ray(&ray, ray_depth)
         });
         let colour = colours.sum::<Colour>() / self.secondary_rays as f32;
 
@@ -90,7 +91,7 @@ pub struct CheckerMaterial {
 impl Material for CheckerMaterial {
     fn get_colour(
         &self,
-        _scene: &mut Scene,
+        _scene: &Scene,
         _view_direction: &Vector3<f32>,
         position: &Point3<f32>,
         _normal: &Vector3<f32>,
@@ -101,9 +102,9 @@ impl Material for CheckerMaterial {
         let value_z = position.z.abs() % (2.0 * self.grid_size) < self.grid_size;
 
         if value_x ^ value_y ^ value_z {
-            WHITE
+            colour::WHITE
         } else {
-            BLACK
+            colour::BLACK
         }
     }
 }
@@ -115,12 +116,34 @@ pub struct LightMaterial {
 impl Material for LightMaterial {
     fn get_colour(
         &self,
-        _scene: &mut Scene,
+        _scene: &Scene,
         _view_direction: &Vector3<f32>,
         _position: &Point3<f32>,
         _normal: &Vector3<f32>,
         _ray_depth: u8,
     ) -> Colour {
         self.colour
+    }
+}
+
+pub struct SkyBoxMaterial {
+    pub colour_bottom: Colour,
+    pub colour_top: Colour,
+}
+
+impl Material for SkyBoxMaterial {
+    fn get_colour(
+        &self,
+        _scene: &Scene,
+        view_direction: &Vector3<f32>,
+        _position: &Point3<f32>,
+        _normal: &Vector3<f32>,
+        _ray_depth: u8,
+    ) -> Colour {
+        Colour::lerp(
+            self.colour_bottom,
+            self.colour_top,
+            0.5 + view_direction.normalize().y * 0.5,
+        )
     }
 }

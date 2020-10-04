@@ -10,10 +10,10 @@ mod sphere;
 mod viewport;
 
 use camera::Camera;
-use cgmath::{InnerSpace, Point3, Vector3, VectorSpace};
-use colour::Colour;
+use cgmath::{Point3, Vector3};
+
 use intersectable::{Intersectables, Triangle};
-use material::{CheckerMaterial, DiffuseMaterial, LightMaterial, Material, MirrorMaterial};
+use material::*;
 use scene::Scene;
 use sphere::Sphere;
 
@@ -50,6 +50,10 @@ pub fn main() {
         colour: colour::LIGHT_GREY,
         secondary_rays: 64,
     });
+    let material_skybox = Rc::new(SkyBoxMaterial {
+        colour_top: colour::LIGHT_BLUE,
+        colour_bottom: colour::WHITE,
+    });
 
     let root = Intersectables {
         intersectables: vec![
@@ -82,30 +86,26 @@ pub fn main() {
         ],
     };
 
-    let mut scene = Scene {
-        root_intersectable: Box::new(root),
-        max_ray_depth: 4,
-        total_number_of_rays_cast: 0,
-        total_number_of_rays_killed: 0,
-        background: background_sky,
-    };
+    let scene = Scene::new(5, Box::new(root), material_skybox.clone());
 
     let width = 1024;
     let height = 1024;
-    let image = render(&camera, &mut scene, width, height);
+    let image = render(&camera, &scene, width, height);
 
     let file_create_handle = File::create("image.ppm");
     if let Ok(mut file) = file_create_handle {
         file.write_all(image.as_ref()).unwrap();
     }
 
+    let statistics = scene.statistics.borrow();
+
     println!(
         "Number of rays traced: {0}",
-        scene.total_number_of_rays_cast
+        statistics.total_number_of_rays_cast
     );
     println!(
         "Number of rays killed: {0}",
-        scene.total_number_of_rays_killed
+        statistics.total_number_of_rays_killed
     );
 }
 
@@ -118,18 +118,10 @@ fn make_camera() -> Camera {
     Camera::new(origin, forward, up, fov)
 }
 
-fn render(camera: &Camera, scene: &mut Scene, width: usize, height: usize) -> String {
+fn render(camera: &Camera, scene: &Scene, width: usize, height: usize) -> String {
     let image = camera
         .get_viewport(width, height)
-        .map(|ray| scene.get_colour(&ray, scene.max_ray_depth));
+        .map(|ray| scene.cast_ray(&ray, 0));
 
     ppm_image::write_ppm_image(width, height, 255, image)
-}
-
-fn background_sky(direction: &Vector3<f32>) -> Colour {
-    Colour::lerp(
-        colour::LIGHT_BLUE,
-        colour::WHITE,
-        0.5 + direction.normalize().y * 0.5,
-    )
 }

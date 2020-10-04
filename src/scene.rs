@@ -1,23 +1,53 @@
-use cgmath::Vector3;
+use std::{cell::RefCell, rc::Rc};
 
-use crate::{colour::Colour, colour::BLACK, intersectable::Intersectable, ray::Ray};
+use cgmath::num_traits::identities::Zero;
+use cgmath::EuclideanSpace;
+use cgmath::{Point3, Vector3};
+
+use crate::{colour, colour::Colour, intersectable::Intersectable, material::Material, ray::Ray};
 
 pub struct Scene {
     pub max_ray_depth: u8,
     pub root_intersectable: Box<dyn Intersectable>,
+    pub background: Rc<dyn Material>,
+    pub statistics: RefCell<SceneStatistics>,
+}
+
+#[derive(Copy, Clone)]
+pub struct SceneStatistics {
     pub total_number_of_rays_cast: u32,
     pub total_number_of_rays_killed: u32,
-    pub background: fn(&Vector3<f32>) -> Colour,
 }
 
 impl Scene {
-    pub fn get_colour(&mut self, ray: &Ray, ray_depth: u8) -> Colour {
-        if ray_depth == 0 {
-            self.total_number_of_rays_killed += 1;
-            return BLACK;
-        }
+    pub fn new(
+        max_ray_depth: u8,
+        root_intersectable: Box<dyn Intersectable>,
+        background: Rc<dyn Material>,
+    ) -> Scene {
+        let statistics = RefCell::new(SceneStatistics {
+            total_number_of_rays_cast: 0,
+            total_number_of_rays_killed: 0,
+        });
 
-        self.total_number_of_rays_cast += 1;
+        Self {
+            max_ray_depth,
+            root_intersectable,
+            statistics,
+            background,
+        }
+    }
+
+    pub fn cast_ray(&self, ray: &Ray, ray_depth: u8) -> Colour {
+        {
+            let mut statistics = self.statistics.borrow_mut();
+            if ray_depth > self.max_ray_depth {
+                statistics.total_number_of_rays_killed += 1;
+                return colour::BLACK;
+            }
+
+            statistics.total_number_of_rays_cast += 1;
+        }
 
         let hit = self.root_intersectable.intersect(ray);
         match hit {
@@ -26,9 +56,15 @@ impl Scene {
                 &ray.direction,
                 &hit.position,
                 &hit.normal,
-                ray_depth - 1,
+                ray_depth + 1,
             ),
-            None => (self.background)(&ray.direction),
+            None => self.background.get_colour(
+                self,
+                &ray.direction,
+                &Point3::<f32>::origin(),
+                &Vector3::<f32>::zero(),
+                ray_depth + 1,
+            ),
         }
     }
 }
