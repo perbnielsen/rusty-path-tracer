@@ -12,17 +12,19 @@ mod viewport;
 use camera::Camera;
 use cgmath::{Point3, Vector3};
 
+use colour::Colour;
 use intersectable::{Intersectables, Triangle};
+use json::iterators::Members;
 use material::*;
 use scene::Scene;
 use sphere::Sphere;
 
-use std::{fs::File, io::Write, rc::Rc};
+use std::{collections::HashMap, fs, fs::File, io::Write, rc::Rc};
 
 // Features:
 // =========
 // [X] Fix aspect ratio
-// [X] Support "HDR"
+// [X] Support 'HDR'
 // [X] Sky box
 // [X] Add light sources
 // [X] Add indirect light
@@ -38,12 +40,13 @@ use std::{fs::File, io::Write, rc::Rc};
 pub fn main() {
     println!("The rusty path tracer!");
 
+    // let scene = read_scene_from_json("scene.json");
     let camera = make_camera();
     let material_mirror = Rc::new(MirrorMaterial {
         colour: colour::LIGHT_BLUE,
     });
     let material_light = Rc::new(LightMaterial {
-        colour: colour::GREEN,
+        colour: colour::LIGHT_GREEN,
     });
     let material_checker = Rc::new(CheckerMaterial { grid_size: 0.5 });
     let material_diffuse = Rc::new(DiffuseMaterial {
@@ -124,4 +127,127 @@ fn render(camera: &Camera, scene: &Scene, width: usize, height: usize) -> String
         .map(|ray| scene.cast_ray(&ray, 0));
 
     ppm_image::write_ppm_image(width, height, 255, image)
+}
+
+#[allow(dead_code, unused_variables)]
+fn read_scene_from_json(filename: &str) -> HashMap<String, Rc<dyn Material>> {
+    let file = fs::read_to_string(filename).expect("Failed to read scene file");
+    let json = json::parse(file.as_str()).expect("Failed to parse json file");
+    // println!('Materials:\n{}', json['materials']);
+    let colours = parse_colours(json["colours"].members());
+    let materials = parse_materials(json["materials"].members(), colours);
+
+    materials
+    // for material in json['materials'].members() {
+    //     let material =
+
+    //     println!('Type: {}', material['name'])
+    // }
+}
+
+#[allow(dead_code, unused_variables)]
+fn parse_colours(colour_definitions: Members) -> HashMap<&str, Colour> {
+    let mut colours = HashMap::new();
+    for colour_definition in colour_definitions {
+        let name = colour_definition["name"]
+            .as_str()
+            .expect("failed to parse colour name");
+        let colour = Colour {
+            r: colour_definition["r"]
+                .as_f32()
+                .expect("failed to parse colour r value"),
+            g: colour_definition["g"]
+                .as_f32()
+                .expect("failed to parse colour g value"),
+            b: colour_definition["b"]
+                .as_f32()
+                .expect("failed to parse colour b value"),
+            a: 1.0,
+        };
+        colours.insert(name, colour);
+    }
+    colours
+}
+
+#[allow(dead_code, unused_variables)]
+fn parse_materials(
+    material_definitions: Members,
+    colours: HashMap<&str, Colour>,
+) -> HashMap<String, Rc<dyn Material>> {
+    let mut materials = HashMap::<String, Rc<dyn Material>>::new();
+    for material_definition in material_definitions {
+        let name = material_definition["name"]
+            .as_str()
+            .expect("failed to parse the material name");
+        let material_type = material_definition["type"]
+            .as_str()
+            .expect("failed to parse the material type");
+        match material_type {
+            "DiffuseMaterial" => {
+                let colour_name = material_definition["colour"]
+                    .as_str()
+                    .expect("failed to parse colour name");
+                let colour = colours.get(&colour_name).unwrap().clone();
+                let material = Rc::new(DiffuseMaterial {
+                    colour,
+                    secondary_rays: 16,
+                });
+                materials.insert(name.to_owned(), material);
+            }
+            _ => {}
+        }
+    }
+
+    materials
+}
+
+#[allow(dead_code, unused_variables)]
+fn parse_objects(objects: Members, materials: HashMap<String, Rc<dyn Material>>) -> Scene {
+    todo!()
+}
+
+#[test]
+fn parse_scene_test() {
+    // let scene = read_scene_from_json("scene.json");
+    todo!()
+}
+
+#[test]
+fn parse_colours_test() {
+    let colour_json = "{
+        \"colours\": 
+        [ 
+            {
+                \"name\": \"light_blue\", \"r\": 0.0, \"g\": 0.25, \"b\": 0.75
+            }
+        ] 
+    }\n";
+    let json = json::parse(colour_json).expect("Failed to parse json file");
+    let colours = parse_colours(json["colours"].members());
+
+    assert!(colours.contains_key("light_blue"));
+    assert_eq!(colours["light_blue"].r, 0.0);
+    assert_eq!(colours["light_blue"].g, 0.25);
+    assert_eq!(colours["light_blue"].b, 0.75);
+    assert_eq!(colours["light_blue"].a, 1.0);
+}
+
+#[test]
+fn parse_materials_test() {
+    let mut colours = HashMap::new();
+    colours.insert("light_blue", colour::LIGHT_BLUE);
+    let materials_json = "{
+        \"materials\": 
+        [
+            {
+                \"name\": \"diffuse_blue\",
+                \"type\": \"DiffuseMaterial\",
+                \"colour\": \"light_blue\"
+            }
+        ]
+    }\n";
+    let json = json::parse(materials_json).expect("Failed to parse json file");
+    let materials = parse_materials(json["materials"].members(), colours);
+
+    assert!(materials.contains_key("diffuse_blue"));
 }

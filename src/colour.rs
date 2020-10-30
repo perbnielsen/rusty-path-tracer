@@ -38,6 +38,14 @@ pub const LIGHT_BLUE: Colour = Colour {
 };
 
 #[allow(dead_code)]
+pub const LIGHT_GREEN: Colour = Colour {
+    r: 0.5,
+    g: 1.0,
+    b: 0.5,
+    a: 1.0,
+};
+
+#[allow(dead_code)]
 pub const RED: Colour = Colour {
     r: 1.0,
     g: 0.0,

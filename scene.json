@@ -1,0 +1,29 @@
+{
+    "colours": [
+        {
+            "name": "light_blue",
+            "r": 0.5,
+            "g": 0.5,
+            "b": 1.0
+        }
+    ],
+    "materials": [
+        {
+            "name": "diffuse_blue",
+            "type": "DiffuseMaterial",
+            "colour": "light_blue"
+        }
+    ],
+    "objects": [
+        {
+            "type": "sphere",
+            "centre": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "radius": 2.0,
+            "material": "diffuse_blue"
+        }
+    ]
+}
