@@ -14,20 +14,6 @@ impl Camera {
     }
 
     pub fn get_viewport(&self, width: usize, height: usize) -> Viewport {
-        let aspect_ratio = height as f32 / width as f32;
-        let fov_x = (self.fov / 2.0).tan() * 2.0;
-        let fov_y = fov_x * aspect_ratio;
-
-        Viewport::new(
-            width,
-            height,
-            self.basis,
-            self.origin,
-            self.fov,
-            0,
-            0,
-            fov_x,
-            fov_y,
-        )
+        Viewport::new(width, height, self.basis, self.origin, self.fov)
     }
 }

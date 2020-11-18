@@ -207,13 +207,7 @@ fn parse_objects(objects: Members, materials: HashMap<String, Rc<dyn Material>>)
 }
 
 #[test]
-fn parse_scene_test() {
-    // let scene = read_scene_from_json("scene.json");
-    todo!()
-}
-
-#[test]
-fn parse_colours_test() {
+fn parse_colours_test_success() {
     let colour_json = "{
         \"colours\": 
         [ 
@@ -233,7 +227,7 @@ fn parse_colours_test() {
 }
 
 #[test]
-fn parse_materials_test() {
+fn parse_materials_test_success() {
     let mut colours = HashMap::new();
     colours.insert("light_blue", colour::LIGHT_BLUE);
     let materials_json = "{
@@ -250,4 +244,10 @@ fn parse_materials_test() {
     let materials = parse_materials(json["materials"].members(), colours);
 
     assert!(materials.contains_key("diffuse_blue"));
+}
+
+#[test]
+fn parse_scene_test() {
+    let scene = read_scene_from_json("scene.json");
+    todo!()
 }

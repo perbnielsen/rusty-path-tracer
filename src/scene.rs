@@ -7,10 +7,10 @@ use cgmath::{Point3, Vector3};
 use crate::{colour, colour::Colour, intersectable::Intersectable, material::Material, ray::Ray};
 
 pub struct Scene {
-    pub max_ray_depth: u8,
-    pub root_intersectable: Box<dyn Intersectable>,
-    pub background: Rc<dyn Material>,
     pub statistics: RefCell<SceneStatistics>,
+    max_ray_depth: u8,
+    root_intersectable: Box<dyn Intersectable>,
+    background: Rc<dyn Material>,
 }
 
 #[derive(Copy, Clone)]
