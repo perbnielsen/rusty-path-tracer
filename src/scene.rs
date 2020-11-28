@@ -4,7 +4,10 @@ use cgmath::num_traits::identities::Zero;
 use cgmath::EuclideanSpace;
 use cgmath::{Point3, Vector3};
 
-use crate::{colour, colour::Colour, intersectable::Intersectable, material::Material, ray::Ray};
+use crate::colour::{Colour, BLACK};
+use crate::intersectable::Intersectable;
+use crate::material::Material;
+use crate::ray::Ray;
 
 pub struct Scene {
     pub statistics: RefCell<SceneStatistics>,
@@ -43,7 +46,7 @@ impl Scene {
             let mut statistics = self.statistics.borrow_mut();
             if ray_depth > self.max_ray_depth {
                 statistics.total_number_of_rays_killed += 1;
-                return colour::BLACK;
+                return BLACK;
             }
 
             statistics.total_number_of_rays_cast += 1;

@@ -1,13 +1,16 @@
 use crate::{hit::Hit, intersectable::Intersectable, ray::Ray, Material};
 use cgmath::{InnerSpace, Point3};
+use serde::{Deserialize, Serialize};
 use std::rc::Rc;
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Sphere {
     pub centre: Point3<f32>,
     pub radius: f32,
     pub material: Rc<dyn Material>,
 }
 
+#[typetag::serde]
 impl Intersectable for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<Hit> {
         let m = ray.origin - self.centre;

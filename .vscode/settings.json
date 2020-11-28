@@ -9,6 +9,9 @@
         "intersectables",
         "intersector",
         "repr",
+        "serde",
+        "structopt",
+        "typetag",
         "ulps"
     ]
 }

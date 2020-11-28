@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::colour;
 use crate::colour::Colour;
 use crate::ray::Ray;
@@ -7,8 +9,10 @@ use cgmath::Point3;
 use cgmath::Vector3;
 use cgmath::VectorSpace;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 
-pub trait Material {
+#[typetag::serde]
+pub trait Material: Debug {
     fn get_colour(
         &self,
         scene: &Scene,
@@ -19,10 +23,12 @@ pub trait Material {
     ) -> Colour;
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct MirrorMaterial {
     pub colour: Colour,
 }
 
+#[typetag::serde]
 impl Material for MirrorMaterial {
     fn get_colour(
         &self,
@@ -43,11 +49,13 @@ impl Material for MirrorMaterial {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DiffuseMaterial {
     pub colour: Colour,
     pub secondary_rays: i32,
 }
 
+#[typetag::serde]
 impl Material for DiffuseMaterial {
     fn get_colour(
         &self,
@@ -84,10 +92,12 @@ pub fn unit_vector_in_hemisphere(direction: &Vector3<f32>) -> Vector3<f32> {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CheckerMaterial {
     pub grid_size: f32,
 }
 
+#[typetag::serde]
 impl Material for CheckerMaterial {
     fn get_colour(
         &self,
@@ -109,10 +119,12 @@ impl Material for CheckerMaterial {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LightMaterial {
     pub colour: Colour,
 }
 
+#[typetag::serde]
 impl Material for LightMaterial {
     fn get_colour(
         &self,
@@ -126,11 +138,13 @@ impl Material for LightMaterial {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SkyBoxMaterial {
     pub colour_bottom: Colour,
     pub colour_top: Colour,
 }
 
+#[typetag::serde]
 impl Material for SkyBoxMaterial {
     fn get_colour(
         &self,
@@ -146,4 +160,24 @@ impl Material for SkyBoxMaterial {
             0.5 + view_direction.normalize().y * 0.5,
         )
     }
+}
+
+#[test]
+pub fn serialise_material() {
+    let material_diffuse: &dyn Material = &DiffuseMaterial {
+        colour: colour::LIGHT_GREY,
+        secondary_rays: 64,
+    };
+
+    let _material_as_str = serde_json::to_string(&material_diffuse).unwrap();
+
+    assert_eq!(_material_as_str, "{\"DiffuseMaterial\":{\"colour\":{\"r\":0.75,\"g\":0.75,\"b\":0.75,\"a\":1.0},\"secondary_rays\":64}}");
+}
+
+#[test]
+pub fn deserialise_material() {
+    let _material: Box<dyn Material> = serde_json::from_str(
+        "{\"DiffuseMaterial\":{\"colour\":{\"r\":0.75,\"g\":0.75,\"b\":0.75,\"a\":1.0},\"secondary_rays\":64}}",
+    )
+    .unwrap();
 }

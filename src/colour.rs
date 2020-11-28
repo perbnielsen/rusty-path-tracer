@@ -4,8 +4,9 @@ use std::{
 };
 
 use cgmath::{VectorSpace, Zero};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 pub struct Colour {
     pub r: f32,
     pub g: f32,
@@ -192,4 +193,23 @@ impl VectorSpace for Colour {
     fn lerp(self, other: Self, amount: Self::Scalar) -> Self {
         self + ((other - self) * amount)
     }
+}
+
+#[test]
+pub fn deserialize_colour() {
+    let colour: Colour = serde_json::from_str(
+        "{
+        \"name\": \"light_blue\",
+        \"r\": 0.25,
+        \"g\": 0.5,
+        \"b\": 0.75,
+        \"a\": 1.0
+    }",
+    )
+    .unwrap();
+
+    assert_eq!(colour.r, 0.25);
+    assert_eq!(colour.g, 0.5);
+    assert_eq!(colour.b, 0.75);
+    assert_eq!(colour.a, 1.0);
 }
