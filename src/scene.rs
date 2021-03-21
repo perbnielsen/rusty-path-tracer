@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, Mutex};
 
 use cgmath::num_traits::identities::Zero;
 use cgmath::EuclideanSpace;
@@ -10,10 +10,10 @@ use crate::material::Material;
 use crate::ray::Ray;
 
 pub struct Scene {
-    pub statistics: RefCell<SceneStatistics>,
+    pub statistics: Arc<Mutex<SceneStatistics>>,
     max_ray_depth: u8,
     root_intersectable: Box<dyn Intersectable>,
-    background: Rc<dyn Material>,
+    background: Box<dyn Material>,
 }
 
 #[derive(Copy, Clone)]
@@ -26,12 +26,12 @@ impl Scene {
     pub fn new(
         max_ray_depth: u8,
         root_intersectable: Box<dyn Intersectable>,
-        background: Rc<dyn Material>,
+        background: Box<dyn Material>,
     ) -> Scene {
-        let statistics = RefCell::new(SceneStatistics {
+        let statistics = Arc::new(Mutex::new(SceneStatistics {
             total_number_of_rays_cast: 0,
             total_number_of_rays_killed: 0,
-        });
+        }));
 
         Self {
             max_ray_depth,
@@ -43,7 +43,8 @@ impl Scene {
 
     pub fn cast_ray(&self, ray: &Ray, ray_depth: u8) -> Colour {
         {
-            let mut statistics = self.statistics.borrow_mut();
+            let statistics = Arc::clone(&self.statistics);
+            let mut statistics = statistics.lock().expect("failed to acquire statistics");
             if ray_depth > self.max_ray_depth {
                 statistics.total_number_of_rays_killed += 1;
                 return BLACK;

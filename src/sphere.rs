@@ -1,13 +1,13 @@
 use crate::{hit::Hit, intersectable::Intersectable, ray::Ray, Material};
 use cgmath::{InnerSpace, Point3};
 use serde::{Deserialize, Serialize};
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Sphere {
     pub centre: Point3<f32>,
     pub radius: f32,
-    pub material: Rc<dyn Material>,
+    pub material: Arc<dyn Material>,
 }
 
 #[typetag::serde]

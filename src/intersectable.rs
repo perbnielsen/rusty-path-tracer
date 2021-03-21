@@ -1,10 +1,10 @@
 use crate::{hit::Hit, material::Material, ray::Ray};
 use cgmath::{InnerSpace, Point3};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, rc::Rc};
+use std::{fmt::Debug, sync::Arc};
 
 #[typetag::serde]
-pub trait Intersectable: Debug {
+pub trait Intersectable: Debug + Send + Sync {
     fn intersect(&self, ray: &Ray) -> Option<Hit>;
 }
 
@@ -29,7 +29,7 @@ pub struct Triangle {
     pub a: Point3<f32>,
     pub b: Point3<f32>,
     pub c: Point3<f32>,
-    pub material: Rc<dyn Material>,
+    pub material: Arc<dyn Material>,
 }
 
 #[typetag::serde]

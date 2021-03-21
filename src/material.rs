@@ -12,7 +12,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 #[typetag::serde]
-pub trait Material: Debug {
+pub trait Material: Debug + Sync + Send {
     fn get_colour(
         &self,
         scene: &Scene,
@@ -138,7 +138,7 @@ impl Material for LightMaterial {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SkyBoxMaterial {
     pub colour_bottom: Colour,
     pub colour_top: Colour,
