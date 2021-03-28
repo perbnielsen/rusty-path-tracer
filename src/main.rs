@@ -19,7 +19,7 @@ use material::*;
 use ray::Ray;
 use scene::Scene;
 use scoped_threadpool::Pool;
-use std::{fs, fs::File, io::Write};
+use std::{fs, fs::File, io::Write, time::Instant};
 use structopt::StructOpt;
 
 // Features:
@@ -97,11 +97,16 @@ impl Renderer {
         println!("Chunk size: {}", chunk_size);
 
         let mut image = vec![BLACK; image_size];
-        let mut thread_pool = Pool::new(self.num_workers as u32);
+
+        println!("Generation rays...");
+        let now = Instant::now();
 
         let rays: Vec<Ray> = camera.get_viewport(width, height).collect();
 
-        thread_pool.scoped(|scope| {
+        println!("Casting rays... ({})", now.elapsed().as_secs());
+        let now = Instant::now();
+
+        Pool::new(self.num_workers as u32).scoped(|scope| {
             let ray_chunks = rays.chunks(chunk_size);
 
             let image_chunks = image.chunks_mut(chunk_size);
@@ -116,6 +121,13 @@ impl Renderer {
             }
         });
 
-        ppm_image::write_ppm_image(width, height, 255, image.into_iter())
+        println!("Writing image... ({})", now.elapsed().as_secs());
+        let now = Instant::now();
+
+        let image_string = ppm_image::write_ppm_image(width, height, 255, image.into_iter());
+
+        println!("Done... ({})", now.elapsed().as_secs());
+
+        image_string
     }
 }
