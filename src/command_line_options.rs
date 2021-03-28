@@ -15,11 +15,15 @@ pub struct CommandLineOptions {
     #[structopt(default_value = "1024")]
     pub height: usize,
 
-    ///NUmber of worker threads to spawn
+    ///Number of worker threads to spawn
     #[structopt(default_value = "1", short, long)]
     pub num_workers: usize,
 
-    ///NUmber of chunks to split the image into
+    ///Number of chunks to split the image into
     #[structopt(default_value = "100", long)]
     pub num_chunks: usize,
+
+    ///Name of output image
+    #[structopt(default_value = "image.ppm", long)]
+    pub image_name: String,
 }

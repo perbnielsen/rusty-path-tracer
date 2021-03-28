@@ -65,7 +65,7 @@ pub fn main() {
         command_line_options.height,
     );
 
-    let file_create_handle = File::create("image.ppm");
+    let file_create_handle = File::create(command_line_options.image_name);
     if let Ok(mut file) = file_create_handle {
         file.write_all(image.as_ref()).unwrap();
     }
@@ -91,6 +91,7 @@ impl Renderer {
         let image_size = width * height;
         let chunk_size = image_size / self.num_chunks;
 
+        println!("Image     : {} x {} = {}", width, height, image_size);
         println!("Workers   : {}", self.num_workers);
         println!("Chunks    : {}", self.num_chunks);
         println!("Chunk size: {}", chunk_size);
@@ -107,16 +108,10 @@ impl Renderer {
 
             let jobs = ray_chunks.zip(image_chunks);
             for (rays, image_chunk) in jobs {
-                // let scene = self.scene.clone();
                 scope.execute(move || {
-                    let mut rays_cast = 0;
-                    let mut colours = rays.iter().map(|ray| {
-                        rays_cast += 1;
-                        self.scene.cast_ray(ray, 0)
-                    });
-                    for pixel in image_chunk {
-                        *pixel = colours.next().unwrap();
-                    }
+                    rays.iter()
+                        .enumerate()
+                        .for_each(|(idx, ray)| image_chunk[idx] = self.scene.cast_ray(ray, 0));
                 });
             }
         });
