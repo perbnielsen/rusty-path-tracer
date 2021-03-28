@@ -103,7 +103,7 @@ impl Renderer {
 
         let rays: Vec<Ray> = camera.get_viewport(width, height).collect();
 
-        println!("Casting rays... ({})", now.elapsed().as_secs());
+        println!("Casting rays... ({}ms)", now.elapsed().as_millis());
         let now = Instant::now();
 
         Pool::new(self.num_workers as u32).scoped(|scope| {
@@ -121,12 +121,12 @@ impl Renderer {
             }
         });
 
-        println!("Writing image... ({})", now.elapsed().as_secs());
+        println!("Writing image... ({}ms)", now.elapsed().as_millis());
         let now = Instant::now();
 
         let image_string = ppm_image::write_ppm_image(width, height, 255, image.into_iter());
 
-        println!("Done... ({})", now.elapsed().as_secs());
+        println!("Done... ({}ms)", now.elapsed().as_millis());
 
         image_string
     }
