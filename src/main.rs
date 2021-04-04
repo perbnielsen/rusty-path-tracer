@@ -32,13 +32,15 @@ use structopt::StructOpt;
 // [X] Add triangle primitive
 // [X] Implement reflection
 // [X] Load scene from file
-// [ ] Parallel rendering
-//   [ ] Use bigger jobs?
+// [X] Parallel rendering
+//   [X] Use bigger jobs?
 // [ ] Add plane primitive
 // [ ] Add mesh primitive
 // [ ] Implement refraction
 // [ ] Add sub-pixel rays
 // [ ] Support linear -> sRGB colour space (http://chilliant.blogspot.com.au/2012/08/srgb-approximations-for-hlsl.html)
+// [ ] Convert to library
+// [ ] Realtime UI
 
 pub fn main() {
     let command_line_options = CommandLineOptions::from_args();
