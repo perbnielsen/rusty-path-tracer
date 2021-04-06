@@ -21,7 +21,7 @@ use material::*;
 
 use scene::Scene;
 
-use sdl2::keyboard::Keycode;
+use sdl2::keyboard::{Keycode, Scancode};
 use sdl2::{event::Event, pixels::PixelFormatEnum};
 use std::{
     fs,
@@ -120,32 +120,28 @@ pub fn main() {
                     keycode: Some(Keycode::Q),
                     ..
                 } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Left),
-                    ..
-                } => camera.translate(camera.left() * delta_time),
-                Event::KeyDown {
-                    keycode: Some(Keycode::Right),
-                    ..
-                } => camera.translate(-camera.left() * delta_time),
-                Event::KeyDown {
-                    keycode: Some(Keycode::Up),
-                    ..
-                } => camera.translate(camera.up() * delta_time),
-                Event::KeyDown {
-                    keycode: Some(Keycode::Down),
-                    ..
-                } => camera.translate(-camera.up() * delta_time),
-                Event::KeyDown {
-                    keycode: Some(Keycode::W),
-                    ..
-                } => camera.translate(camera.forward() * delta_time),
-                Event::KeyDown {
-                    keycode: Some(Keycode::R),
-                    ..
-                } => camera.translate(-camera.forward() * delta_time),
                 _ => {}
             }
+        }
+
+        let keyboard_state = event_pump.keyboard_state();
+        if keyboard_state.is_scancode_pressed(Scancode::Left) {
+            camera.translate(camera.left() * delta_time);
+        }
+        if keyboard_state.is_scancode_pressed(Scancode::Right) {
+            camera.translate(-camera.left() * delta_time);
+        }
+        if keyboard_state.is_scancode_pressed(Scancode::Up) {
+            camera.translate(camera.up() * delta_time);
+        }
+        if keyboard_state.is_scancode_pressed(Scancode::Down) {
+            camera.translate(-camera.up() * delta_time);
+        }
+        if keyboard_state.is_scancode_pressed(Scancode::End) {
+            camera.translate(camera.forward() * delta_time);
+        }
+        if keyboard_state.is_scancode_pressed(Scancode::Home) {
+            camera.translate(-camera.forward() * delta_time);
         }
 
         texture

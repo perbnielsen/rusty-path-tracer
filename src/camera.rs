@@ -27,7 +27,7 @@ impl Camera {
     }
 
     pub fn translate(&mut self, vector: Vector3<f32>) {
-        self.origin += vector;
+        self.origin -= vector;
     }
 
     pub fn get_viewport(&self, width: usize, height: usize) -> Viewport {
