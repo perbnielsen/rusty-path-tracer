@@ -6,20 +6,24 @@ mod intersectable;
 mod material;
 mod ppm_image;
 mod ray;
+mod renderer;
 mod scene;
 mod sphere;
 mod viewport;
 
+use crate::renderer::Renderer;
 use camera::Camera;
 use cgmath::{Point3, Vector3};
-use colour::BLACK;
+
 use command_line_options::CommandLineOptions;
 use intersectable::Intersectable;
 use material::*;
-use ray::Ray;
+
 use scene::Scene;
-use scoped_threadpool::Pool;
-use std::{fs, fs::File, io::Write, time::Instant};
+
+use sdl2::keyboard::Keycode;
+use sdl2::{event::Event, pixels::PixelFormatEnum};
+use std::{fs, time::Duration};
 use structopt::StructOpt;
 
 // Features:
@@ -42,35 +46,16 @@ use structopt::StructOpt;
 // [ ] Convert to library
 // [ ] Realtime UI
 
-pub fn main() {
-    let command_line_options = CommandLineOptions::from_args();
-    let file = fs::read_to_string(command_line_options.scene).expect("Failed to read scene");
+pub fn load_scene(file_name: String) -> Scene {
+    let file = fs::read_to_string(file_name).expect("Failed to read scene");
     let root: Box<dyn Intersectable> =
         serde_json::from_str(file.as_str()).expect("Failed to parse scene");
-    let camera = make_camera();
     let material_skybox = SkyBoxMaterial {
         colour_top: colour::LIGHT_BLUE,
         colour_bottom: colour::WHITE,
     };
 
-    let scene = Scene::new(5, root, Box::new(material_skybox.clone()));
-
-    let renderer = Renderer {
-        num_workers: command_line_options.num_workers,
-        num_chunks: command_line_options.num_chunks,
-        scene,
-    };
-
-    let image = renderer.render(
-        &camera,
-        command_line_options.width,
-        command_line_options.height,
-    );
-
-    let file_create_handle = File::create(command_line_options.image_name);
-    if let Ok(mut file) = file_create_handle {
-        file.write_all(image.as_ref()).unwrap();
-    }
+    Scene::new(5, root, Box::new(material_skybox.clone()))
 }
 
 fn make_camera() -> Camera {
@@ -82,54 +67,75 @@ fn make_camera() -> Camera {
     Camera::new(origin, forward, up, fov)
 }
 
-struct Renderer {
-    num_workers: usize,
-    num_chunks: usize,
-    scene: Scene,
-}
+pub fn main() {
+    let command_line_options = CommandLineOptions::from_args();
 
-impl Renderer {
-    pub fn render(&self, camera: &Camera, width: usize, height: usize) -> String {
-        let image_size = width * height;
-        let chunk_size = image_size / self.num_chunks;
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+    let window_width = command_line_options.width;
+    let window_height = command_line_options.height;
 
-        println!("Image     : {} x {} = {}", width, height, image_size);
-        println!("Workers   : {}", self.num_workers);
-        println!("Chunks    : {}", self.num_chunks);
-        println!("Chunk size: {}", chunk_size);
+    let window = video_subsystem
+        .window("rust-sdl2 demo", window_width as u32, window_height as u32)
+        .position_centered()
+        .build()
+        .unwrap();
 
-        let mut image = vec![BLACK; image_size];
+    let mut canvas = window.into_canvas().software().build().unwrap();
 
-        println!("Generation rays...");
-        let now = Instant::now();
+    // Get texture
+    let texture_creator = canvas.texture_creator();
+    let mut texture = texture_creator
+        .create_texture_streaming(
+            PixelFormatEnum::RGB24,
+            window_width as u32,
+            window_height as u32,
+        )
+        .unwrap();
 
-        let rays: Vec<Ray> = camera.get_viewport(width, height).collect();
+    let scene = load_scene(command_line_options.scene);
+    let renderer = Renderer {
+        num_workers: command_line_options.num_workers,
+        num_chunks: command_line_options.num_chunks,
+        scene,
+    };
 
-        println!("Casting rays... ({}ms)", now.elapsed().as_millis());
-        let now = Instant::now();
+    let mut camera = make_camera();
+    let camera_movement = Vector3::new(0.1, 0.0, 0.0);
 
-        Pool::new(self.num_workers as u32).scoped(|scope| {
-            let ray_chunks = rays.chunks(chunk_size);
-
-            let image_chunks = image.chunks_mut(chunk_size);
-
-            let jobs = ray_chunks.zip(image_chunks);
-            for (rays, image_chunk) in jobs {
-                scope.execute(move || {
-                    rays.iter()
-                        .enumerate()
-                        .for_each(|(idx, ray)| image_chunk[idx] = self.scene.cast_ray(ray, 0));
-                });
+    let mut event_pump = sdl_context.event_pump().unwrap();
+    'running: loop {
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => break 'running,
+                _ => {}
             }
-        });
+        }
 
-        println!("Writing image... ({}ms)", now.elapsed().as_millis());
-        let now = Instant::now();
+        camera.translate(camera_movement);
 
-        let image_string = ppm_image::write_ppm_image(width, height, 255, image.into_iter());
+        texture
+            .with_lock(None, |pixels, _stride| {
+                let image = renderer.render(&camera, window_width, window_height);
+                let mut i = 0;
+                for pixel in image {
+                    pixels[i] = (pixel.r * 255.0) as u8;
+                    i = i + 1;
+                    pixels[i] = (pixel.g * 255.0) as u8;
+                    i = i + 1;
+                    pixels[i] = (pixel.b * 255.0) as u8;
+                    i = i + 1;
+                }
+            })
+            .expect("nothing to see here");
 
-        println!("Done... ({}ms)", now.elapsed().as_millis());
+        canvas.copy(&texture, None, None).expect("copy failed");
+        canvas.present();
 
-        image_string
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 }
