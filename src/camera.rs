@@ -14,6 +14,18 @@ impl Camera {
         Camera { basis, origin, fov }
     }
 
+    pub fn left(&self) -> Vector3<f32> {
+        self.basis.as_ref().x.clone()
+    }
+
+    pub fn up(&self) -> Vector3<f32> {
+        self.basis.as_ref().y.clone()
+    }
+
+    pub fn forward(&self) -> Vector3<f32> {
+        self.basis.as_ref().z.clone()
+    }
+
     pub fn translate(&mut self, vector: Vector3<f32>) {
         self.origin += vector;
     }

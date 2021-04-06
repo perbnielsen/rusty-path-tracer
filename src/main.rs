@@ -23,7 +23,10 @@ use scene::Scene;
 
 use sdl2::keyboard::Keycode;
 use sdl2::{event::Event, pixels::PixelFormatEnum};
-use std::{fs, time::Duration};
+use std::{
+    fs,
+    time::{Duration, Instant},
+};
 use structopt::StructOpt;
 
 // Features:
@@ -82,8 +85,6 @@ pub fn main() {
         .unwrap();
 
     let mut canvas = window.into_canvas().software().build().unwrap();
-
-    // Get texture
     let texture_creator = canvas.texture_creator();
     let mut texture = texture_creator
         .create_texture_streaming(
@@ -101,22 +102,51 @@ pub fn main() {
     };
 
     let mut camera = make_camera();
-    let camera_movement = Vector3::new(0.1, 0.0, 0.0);
-
     let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut last_frame_start_time = Instant::now();
+
     'running: loop {
+        let delta_time = last_frame_start_time.elapsed().as_millis() as f32 / 1000.0;
+        last_frame_start_time = Instant::now();
+
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
+                }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Q),
+                    ..
                 } => break 'running,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => camera.translate(camera.left() * delta_time),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => camera.translate(-camera.left() * delta_time),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => camera.translate(camera.up() * delta_time),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => camera.translate(-camera.up() * delta_time),
+                Event::KeyDown {
+                    keycode: Some(Keycode::W),
+                    ..
+                } => camera.translate(camera.forward() * delta_time),
+                Event::KeyDown {
+                    keycode: Some(Keycode::R),
+                    ..
+                } => camera.translate(-camera.forward() * delta_time),
                 _ => {}
             }
         }
-
-        camera.translate(camera_movement);
 
         texture
             .with_lock(None, |pixels, _stride| {
