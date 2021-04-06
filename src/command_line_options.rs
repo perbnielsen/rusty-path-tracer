@@ -16,7 +16,7 @@ pub struct CommandLineOptions {
     pub height: usize,
 
     ///Number of worker threads to spawn
-    #[structopt(default_value = "1", short, long)]
+    #[structopt(default_value = "10", short, long)]
     pub num_workers: usize,
 
     ///Number of chunks to split the image into
