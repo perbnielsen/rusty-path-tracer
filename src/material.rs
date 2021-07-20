@@ -82,11 +82,10 @@ impl Material for DiffuseMaterial {
 pub fn unit_vector_in_hemisphere(direction: &Vector3<f32>) -> Vector3<f32> {
     let mut rng = rand::thread_rng();
     loop {
-        let vector = Vector3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
-            .map(|val| val * 2.0 - 1.0);
-
+        let vector = Vector3::<f32>::new(rng.gen(), rng.gen(), rng.gen()).map(|v| v * 2.0 - 1.0);
         let magnitude_sqr = vector.magnitude2();
-        if magnitude_sqr > 0.001 && magnitude_sqr < 1.0 {
+
+        if magnitude_sqr > f32::MIN && magnitude_sqr < 1.0 {
             return (vector.normalize() + direction).normalize();
         }
     }
