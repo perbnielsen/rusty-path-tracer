@@ -23,10 +23,9 @@ use scene::Scene;
 
 use sdl2::keyboard::{Keycode, Scancode};
 use sdl2::{event::Event, pixels::PixelFormatEnum};
-use std::{
-    fs,
-    time::{Duration, Instant},
-};
+use std::fs::File;
+use std::io::Write;
+use std::{fs, time::Instant};
 use structopt::StructOpt;
 
 // Features:
@@ -41,13 +40,13 @@ use structopt::StructOpt;
 // [X] Load scene from file
 // [X] Parallel rendering
 //   [X] Use bigger jobs?
+// [X] Realtime UI
 // [ ] Add plane primitive
 // [ ] Add mesh primitive
 // [ ] Implement refraction
 // [ ] Add sub-pixel rays
 // [ ] Support linear -> sRGB colour space (http://chilliant.blogspot.com.au/2012/08/srgb-approximations-for-hlsl.html)
 // [ ] Convert to library
-// [ ] Realtime UI
 
 pub fn load_scene(file_name: String) -> Scene {
     let file = fs::read_to_string(file_name).expect("Failed to read scene");
@@ -72,18 +71,61 @@ fn make_camera() -> Camera {
 
 pub fn main() {
     let command_line_options = CommandLineOptions::from_args();
-
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
     let window_width = command_line_options.width;
     let window_height = command_line_options.height;
 
+    let scene = load_scene(command_line_options.scene);
+    let camera = make_camera();
+    let renderer = Renderer {
+        num_workers: command_line_options.num_workers,
+        num_chunks: command_line_options.num_chunks,
+        scene,
+    };
+
+    if command_line_options.real_time_ui {
+        real_time_ui(window_width, window_height, camera, renderer);
+    } else {
+        render_image_to_file(
+            renderer,
+            camera,
+            window_width,
+            window_height,
+            command_line_options.image_name,
+        );
+    }
+}
+
+fn render_image_to_file(
+    renderer: Renderer,
+    camera: Camera,
+    window_width: usize,
+    window_height: usize,
+    image_name: String,
+) {
+    let image = renderer.render(&camera, window_width, window_height);
+    let now = Instant::now();
+    println!("Writing image... ({}ms)", now.elapsed().as_millis());
+    let image_string =
+        ppm_image::write_ppm_image(window_width, window_height, 255, image.into_iter());
+    println!("Done... ({}ms)", now.elapsed().as_millis());
+    let file_create_handle = File::create(image_name);
+    if let Ok(mut file) = file_create_handle {
+        file.write_all(image_string.as_ref()).unwrap();
+    }
+}
+
+fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, renderer: Renderer) {
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
-        .window("rust-sdl2 demo", window_width as u32, window_height as u32)
+        .window(
+            "rust-sdl2 demo",
+            2 * window_width as u32,
+            2 * window_height as u32,
+        )
         .position_centered()
         .build()
         .unwrap();
-
     let mut canvas = window.into_canvas().software().build().unwrap();
     let texture_creator = canvas.texture_creator();
     let mut texture = texture_creator
@@ -93,18 +135,8 @@ pub fn main() {
             window_height as u32,
         )
         .unwrap();
-
-    let scene = load_scene(command_line_options.scene);
-    let renderer = Renderer {
-        num_workers: command_line_options.num_workers,
-        num_chunks: command_line_options.num_chunks,
-        scene,
-    };
-
-    let mut camera = make_camera();
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut last_frame_start_time = Instant::now();
-
     'running: loop {
         let delta_time = last_frame_start_time.elapsed().as_millis() as f32 / 1000.0;
         last_frame_start_time = Instant::now();
@@ -137,10 +169,10 @@ pub fn main() {
         if keyboard_state.is_scancode_pressed(Scancode::Down) {
             camera.translate(-camera.up() * delta_time);
         }
-        if keyboard_state.is_scancode_pressed(Scancode::End) {
+        if keyboard_state.is_scancode_pressed(Scancode::PageDown) {
             camera.translate(camera.forward() * delta_time);
         }
-        if keyboard_state.is_scancode_pressed(Scancode::Home) {
+        if keyboard_state.is_scancode_pressed(Scancode::PageUp) {
             camera.translate(-camera.forward() * delta_time);
         }
 
@@ -161,7 +193,5 @@ pub fn main() {
 
         canvas.copy(&texture, None, None).expect("copy failed");
         canvas.present();
-
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 }

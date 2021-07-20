@@ -26,4 +26,8 @@ pub struct CommandLineOptions {
     ///Name of output image
     #[structopt(default_value = "image.ppm", long)]
     pub image_name: String,
+
+    ///Run real-time UI
+    #[structopt(short)]
+    pub real_time_ui: bool,
 }
