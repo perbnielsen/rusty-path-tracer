@@ -26,16 +26,16 @@ impl Intersectable for Sphere {
             return None;
         }
 
-        let t = -b - discriminant.sqrt();
-        if t < 0.0 {
+        let distance = -b - discriminant.sqrt();
+        if distance < 0.0 {
             return None;
         }
 
-        let intersection_point = ray.origin + (t * ray.direction);
+        let intersection_point = ray.origin + (distance * ray.direction);
         let normal = (intersection_point - self.centre).normalize();
 
         Some(Hit::new(
-            t,
+            distance,
             intersection_point,
             normal,
             self.material.clone(),
