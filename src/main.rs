@@ -110,13 +110,16 @@ fn render_image_to_file(
     println!("Done... ({}ms)", now.elapsed().as_millis());
     let file_create_handle = File::create(image_name);
     if let Ok(mut file) = file_create_handle {
-        file.write_all(image_string.as_ref()).unwrap();
+        file.write_all(image_string.as_ref())
+            .expect("failed to write image to file");
     }
 }
 
 fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, renderer: Renderer) {
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
+    let sdl_context = sdl2::init().expect("failed to initialise the sdl context");
+    let video_subsystem = sdl_context
+        .video()
+        .expect("failed to initialise the video subsystem");
     let window = video_subsystem
         .window(
             "rust-sdl2 demo",
@@ -125,8 +128,12 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
         )
         .position_centered()
         .build()
-        .unwrap();
-    let mut canvas = window.into_canvas().software().build().unwrap();
+        .expect("failed to build the window");
+    let mut canvas = window
+        .into_canvas()
+        .software()
+        .build()
+        .expect("failed to build renderer");
     let texture_creator = canvas.texture_creator();
     let mut texture = texture_creator
         .create_texture_streaming(
@@ -134,8 +141,10 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
             window_width as u32,
             window_height as u32,
         )
-        .unwrap();
-    let mut event_pump = sdl_context.event_pump().unwrap();
+        .expect("failed to crete streaming texture");
+    let mut event_pump = sdl_context
+        .event_pump()
+        .expect("failed to accuire event pump");
     let mut last_frame_start_time = Instant::now();
     'running: loop {
         let delta_time = last_frame_start_time.elapsed().as_millis() as f32 / 1000.0;
@@ -189,7 +198,7 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
                     i = i + 1;
                 }
             })
-            .expect("nothing to see here");
+            .expect("failed to accuire texture lock");
 
         canvas.copy(&texture, None, None).expect("copy failed");
         canvas.present();
