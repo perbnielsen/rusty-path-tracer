@@ -144,7 +144,7 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
         .expect("failed to crete streaming texture");
     let mut event_pump = sdl_context
         .event_pump()
-        .expect("failed to accuire event pump");
+        .expect("failed to acquire event pump");
     let mut last_frame_start_time = Instant::now();
     'running: loop {
         let delta_time = last_frame_start_time.elapsed().as_millis() as f32 / 1000.0;
@@ -198,7 +198,7 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
                     i = i + 1;
                 }
             })
-            .expect("failed to accuire texture lock");
+            .expect("failed to acquire texture lock");
 
         canvas.copy(&texture, None, None).expect("copy failed");
         canvas.present();
