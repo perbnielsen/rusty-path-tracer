@@ -22,7 +22,9 @@ use material::*;
 use scene::Scene;
 
 use sdl2::keyboard::{Keycode, Scancode};
+use sdl2::mouse::MouseButton;
 use sdl2::{event::Event, pixels::PixelFormatEnum};
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
 use std::{fs, time::Instant};
@@ -98,18 +100,20 @@ pub fn main() {
 fn render_image_to_file(
     renderer: Renderer,
     camera: Camera,
-    window_width: usize,
-    window_height: usize,
+    width: usize,
+    height: usize,
     image_name: String,
 ) {
-    let image = renderer.render(&camera, window_width, window_height);
+    let image = renderer.render(&camera, width, height);
     let now = Instant::now();
+
     println!("Writing image... ({}ms)", now.elapsed().as_millis());
-    let image_string =
-        ppm_image::write_ppm_image(window_width, window_height, 255, image.into_iter());
+
+    let image_string = ppm_image::write_ppm_image(width, height, 255, image.into_iter());
+
     println!("Done... ({}ms)", now.elapsed().as_millis());
-    let file_create_handle = File::create(image_name);
-    if let Ok(mut file) = file_create_handle {
+
+    if let Ok(mut file) = File::create(image_name) {
         file.write_all(image_string.as_ref())
             .expect("failed to write image to file");
     }
@@ -146,6 +150,7 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
         .event_pump()
         .expect("failed to acquire event pump");
     let mut last_frame_start_time = Instant::now();
+
     'running: loop {
         let delta_time = last_frame_start_time.elapsed().as_millis() as f32 / 1000.0;
         last_frame_start_time = Instant::now();
@@ -183,6 +188,13 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
         }
         if keyboard_state.is_scancode_pressed(Scancode::PageUp) {
             camera.translate(-camera.forward() * delta_time);
+        }
+
+        let mouse_buttons_pressed: HashSet<MouseButton> =
+            event_pump.mouse_state().pressed_mouse_buttons().collect();
+
+        if mouse_buttons_pressed.contains(&MouseButton::Left) {
+            println!("MouseButton::Left");
         }
 
         texture
