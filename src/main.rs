@@ -13,7 +13,6 @@ mod viewport;
 
 use crate::renderer::Renderer;
 use camera::Camera;
-use cgmath::{Point3, Vector3};
 
 use command_line_options::CommandLineOptions;
 use intersectable::Intersectable;
@@ -62,22 +61,13 @@ pub fn load_scene(file_name: String) -> Scene {
     Scene::new(5, root, Box::new(material_skybox.clone()))
 }
 
-fn make_camera() -> Camera {
-    let origin = Point3::new(0.0, 0.0, 5.0);
-    let forward = Vector3::new(0.0, 0.0, -1.0);
-    let up = Vector3::new(0.0, 1.0, 0.0);
-    let fov = core::f32::consts::PI * 0.5;
-
-    Camera::new(origin, forward, up, fov)
-}
-
 pub fn main() {
     let command_line_options = CommandLineOptions::from_args();
     let window_width = command_line_options.width;
     let window_height = command_line_options.height;
 
     let scene = load_scene(command_line_options.scene);
-    let camera = make_camera();
+    let camera = Camera::default();
     let renderer = Renderer {
         num_workers: command_line_options.num_workers,
         num_chunks: command_line_options.num_chunks,

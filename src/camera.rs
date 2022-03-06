@@ -34,3 +34,14 @@ impl Camera {
         Viewport::new(width, height, self.basis, self.origin, self.fov)
     }
 }
+
+impl Default for Camera {
+    fn default() -> Self {
+        let origin = Point3::new(0.0, 0.0, 5.0);
+        let forward = Vector3::new(0.0, 0.0, -1.0);
+        let up = Vector3::new(0.0, 1.0, 0.0);
+        let fov = core::f32::consts::PI * 0.5;
+
+        Camera::new(origin, forward, up, fov)
+    }
+}
