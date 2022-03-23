@@ -21,9 +21,7 @@ use material::*;
 use scene::Scene;
 
 use sdl2::keyboard::{Keycode, Scancode};
-use sdl2::mouse::MouseButton;
 use sdl2::{event::Event, pixels::PixelFormatEnum};
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
 use std::{fs, time::Instant};
@@ -48,6 +46,7 @@ use structopt::StructOpt;
 // [ ] Add sub-pixel rays
 // [ ] Support linear -> sRGB colour space (http://chilliant.blogspot.com.au/2012/08/srgb-approximations-for-hlsl.html)
 // [ ] Convert to library
+// [ ] Run firegraph to see bottle-necks
 
 pub fn load_scene(file_name: String) -> Scene {
     let file = fs::read_to_string(file_name).expect("Failed to read scene");
@@ -178,13 +177,6 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
         }
         if keyboard_state.is_scancode_pressed(Scancode::PageUp) {
             camera.translate(-camera.forward() * delta_time);
-        }
-
-        let mouse_buttons_pressed: HashSet<MouseButton> =
-            event_pump.mouse_state().pressed_mouse_buttons().collect();
-
-        if mouse_buttons_pressed.contains(&MouseButton::Left) {
-            println!("MouseButton::Left");
         }
 
         texture
