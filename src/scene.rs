@@ -33,10 +33,8 @@ impl Scene {
     }
 
     pub fn cast_ray(&self, ray: &Ray, ray_depth: u8) -> Colour {
-        {
-            if ray_depth > self.max_ray_depth {
-                return BLACK;
-            }
+        if ray_depth > self.max_ray_depth {
+            return BLACK;
         }
 
         let hit = self.root_intersectable.intersect(ray);

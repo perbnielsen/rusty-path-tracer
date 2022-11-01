@@ -98,7 +98,7 @@ fn render_image_to_file(
 
     println!("Writing image... ({}ms)", now.elapsed().as_millis());
 
-    let image_string = ppm_image::write_ppm_image(width, height, 255, image.into_iter());
+    let image_string = ppm_image::write_ppm_image(width, height, image);
 
     println!("Done... ({}ms)", now.elapsed().as_millis());
 
