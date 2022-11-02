@@ -180,16 +180,12 @@ fn real_time_ui(window_width: usize, window_height: usize, mut camera: Camera, r
         }
 
         texture
-            .with_lock(None, |pixels, _stride| {
+            .with_lock(None, |pixels, _row_size| {
                 let image = renderer.render(&camera, window_width, window_height);
-                let mut i = 0;
-                for pixel in image {
-                    pixels[i] = (pixel.r * 255.0) as u8;
-                    i = i + 1;
-                    pixels[i] = (pixel.g * 255.0) as u8;
-                    i = i + 1;
-                    pixels[i] = (pixel.b * 255.0) as u8;
-                    i = i + 1;
+                for (i, pixel) in image.iter().enumerate() {
+                    pixels[i * 3 + 0] = (pixel.r * 255.0) as u8;
+                    pixels[i * 3 + 1] = (pixel.g * 255.0) as u8;
+                    pixels[i * 3 + 2] = (pixel.b * 255.0) as u8;
                 }
             })
             .expect("failed to acquire texture lock");
